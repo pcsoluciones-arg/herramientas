@@ -25,6 +25,8 @@ Perfiles:
 | `panel` | El repositorio del panel | Lo de `texto`, más la escala de radios y de letra del CSS |
 | `carpeta` | La raíz de PC Soluciones en OneDrive | Solo nombres: qué hay en la raíz, `_BORRAR` de más, builds dentro de OneDrive |
 
+En los `.md`, lo que va entre comillas invertidas (código o un ejemplo citado) no se revisa.
+
 Resultado: una línea por hallazgo, `FALLA` o `AVISO`. Sale con código 1 si hay alguna `FALLA`, así se puede usar antes de un push o de una entrega.
 
 ### Configuración por proyecto

@@ -10,6 +10,7 @@ CASOS = os.path.join(AQUI, "casos")
 ESPERADO = {
     "bueno-neutro.md": (["--idioma", "neutro"], set()),
     "malo-neutro.md": (["--idioma", "neutro"], {"guiones", "idioma", "titulos", "marcadores"}),
+    "codigo-citado.md": (["--idioma", "neutro"], set()),
     "malo-voseo.md": (["--idioma", "voseo"], {"idioma"}),
     "sitio-malo": (["--perfil", "sitio", "--idioma", "voseo"], {"open-graph", "indexacion", "area-segura", "whatsapp", "copy-publico", "schema"}),
 }

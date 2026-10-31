@@ -412,6 +412,13 @@ def revisar(ruta, perfil, idioma, preview):
         return
     es_html = ext in (".html", ".htm")
     visible = texto_visible(texto) if es_html else texto
+    if ext == ".md":
+        # En Markdown, lo que va entre comillas invertidas es código o un ejemplo citado: no se revisa.
+        # Se reemplaza por espacios para no mover los números de línea.
+        espacios = lambda m: re.sub(r"[^\n]", " ", m.group())
+        visible = re.sub(r"(?ms)^```.*?^```", espacios, visible)
+        visible = re.sub(r"`[^`\n]+`", espacios, visible)
+        texto = visible
     regla_guiones(ruta, texto if not es_html else visible)
     regla_idioma(ruta, visible, idioma)
     regla_titulos(ruta, texto, es_html)
