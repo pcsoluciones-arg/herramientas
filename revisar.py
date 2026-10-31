@@ -55,7 +55,7 @@ RADIOS_OK = {0, 4, 8, 14, 22, 28, 999}
 LETRAS_OK = {12, 13, 14, 15, 16, 20, 26}
 
 # Archivos y carpetas que pueden estar en la raíz de PC Soluciones (regla del 15/10/2026).
-RAIZ_OK = re.compile(r"^(0\d - .+|Autoemoción.*|_Archivo|_BORRAR|youtube|\..+)$")
+RAIZ_OK = re.compile(r"^(0\d - .+|Autoemoción.*|_Archivo|_BORRAR|\..+)$")
 
 hallazgos = []
 
@@ -333,7 +333,7 @@ def regla_pdf(ruta):
 def regla_carpeta_raiz(raiz):
     for nombre in sorted(os.listdir(raiz)):
         if not RAIZ_OK.match(nfc(nombre)):
-            anotar("FALLA", os.path.join(raiz, nombre), 0, "carpeta", "en la raíz de PC Soluciones solo van las carpetas 00 a 07, Autoemoción, _Archivo, _BORRAR y youtube")
+            anotar("FALLA", os.path.join(raiz, nombre), 0, "carpeta", "en la raíz de PC Soluciones solo van las carpetas 00 a 07, Autoemoción, _Archivo y _BORRAR")
     for actual, carpetas, _ in os.walk(raiz):
         if os.path.basename(actual) == "_BORRAR":
             carpetas[:] = []
