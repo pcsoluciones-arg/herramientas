@@ -52,7 +52,8 @@ EXT_CODIGO = {".js", ".mjs", ".py", ".css", ".toml"}
 EXT_IMAGEN = {".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"}
 
 RADIOS_OK = {0, 4, 8, 14, 22, 28, 999}
-LETRAS_OK = {12, 13, 14, 15, 16, 20, 26}
+# 31/10/2026: 32 y 40 son los tamaños de cifra (montos grandes del panel), decididos por Manu.
+LETRAS_OK = {12, 13, 14, 15, 16, 20, 26, 32, 40}
 
 # Archivos y carpetas que pueden estar en la raíz de PC Soluciones (regla del 15/10/2026).
 RAIZ_OK = re.compile(r"^(0\d - .+|Autoemoción.*|_Archivo|_BORRAR|\..+)$")
@@ -267,7 +268,7 @@ def regla_css(ruta, texto):
                 anotar("AVISO", ruta, n, "css-radios", "radio de %spx (los de la escala son 4, 8, 14, 22, 28 o 999)" % v)
     for n, m, _ in lineas_con(re.compile(r"font-size\s*:\s*(\d+(?:\.\d+)?)px"), texto):
         if float(m.group(1)) not in LETRAS_OK:
-            anotar("AVISO", ruta, n, "css-letra", "letra de %spx (la escala es 12, 13, 14, 15, 16, 20 y 26)" % m.group(1))
+            anotar("AVISO", ruta, n, "css-letra", "letra de %spx (la escala es 12, 13, 14, 15, 16, 20 y 26, y 32 y 40 para cifras)" % m.group(1))
 
 
 # ---------------------------------------------------------------- reglas de archivos
