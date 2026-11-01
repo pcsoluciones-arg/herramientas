@@ -62,7 +62,11 @@ Es el paso 3 del plan para cada sitio, en un PR del sitio (riesgo alto: lo aprue
 3. En `build.py`, en `version.json`, sumar el commit de `main` que se publica, que es el que compara el panel: `"origen": sello.origen_head()`.
 4. Sumar `.reglas.json` con el perfil, el idioma del cliente y la URL: `{"perfil": "sitio", "idioma": "voseo", "url": "https://…/", "idioma_por_archivo": [["*.md", "neutro"]]}`.
 5. Correr `bash fabrica/controles.sh ../herramientas` y abrir el PR.
-6. **Paso de Manu:** aprobar el PR desde Actions (crea `produccion` con la primera publicación sellada) y cambiar la rama de Cloudflare Workers Builds de `main` a `produccion`.
+6. **Publicar por primera vez**, en este orden (probado con Emiliano el 1/11/2026):
+   1. Juntar el PR. Cloudflare intenta publicar `main` y `build.py` lo frena por no tener sello: el sitio en vivo no cambia.
+   2. Actions → Publicar → Run workflow, con el número vacío. Crea la rama `produccion` con el commit sellado. Como Cloudflare todavía no la tiene como rama de producción, la arma como vista previa y falla: es esperable, y la corrida queda en rojo.
+   3. En Cloudflare (Workers & Pages → el Worker → Settings → Builds): rama de producción `produccion` (recién ahora aparece en la lista) y, en Previews Base, apagar «Builds for Preview branches». El reintento de la build anterior no sirve: repite la vista previa.
+   4. Publicar un cambio de riesgo bajo (por ejemplo una línea de documentación) con un PR. Al juntarlo, la fábrica lo sella y Cloudflare lo publica como producción. Desde ahí el recorrido es el normal.
 
 ## Cambiar la fábrica
 
