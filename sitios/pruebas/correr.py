@@ -12,6 +12,7 @@ import http.server
 import json
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -340,6 +341,23 @@ if hay_navegador:
     caso("navegador: página con fallas", f == esperado and "toque" in (a or set()), f"esperado {sorted(esperado)}, hallado {sorted(f or [])} / {sorted(a or [])} {err}")
     f, a, err = navegar("navegador-bueno")
     caso("navegador: página sin fallas ni avisos", f == set() and a == set(), f"hallado {sorted(f or [])} / {sorted(a or [])} {err}")
+
+# ---------------------------------------------------------------- orquestador de la Fábrica de sitios
+
+RAIZ = SITIOS.parent
+try:
+    lista = json.loads((SITIOS / "sitios.json").read_text())["sitios"]
+    bien = bool(lista) and all(re.fullmatch(r"pcsoluciones-arg/sitio-[a-z0-9-]+", s.get("repo", "")) and s.get("url", "").startswith("https://") for s in lista)
+    caso("orquestador: sitios.json con repositorios sitio-* y su URL", bien, json.dumps(lista)[:200])
+except (OSError, ValueError, KeyError) as e:
+    caso("orquestador: sitios.json con repositorios sitio-* y su URL", False, str(e))
+
+textos = {p: p.read_text() for p in [SITIOS / "orquestador.md", *sorted((SITIOS / "agentes").glob("*.md"))]}
+faltan = sorted({ref for t in textos.values() for ref in re.findall(r"`((?:sitios|skills)/[\w/.-]+\.(?:md|json|py|sh))`", t)
+                 if not (RAIZ / ref).exists()})
+caso("orquestador: los archivos que nombran existen", not faltan, ", ".join(faltan))
+guiones = [p.name for p, t in textos.items() if "—" in t or "–" in t]
+caso("orquestador: sin guiones largos", not guiones, ", ".join(guiones))
 
 print(f"\n{fallas} fallas")
 sys.exit(1 if fallas else 0)

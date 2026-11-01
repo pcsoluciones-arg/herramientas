@@ -14,6 +14,9 @@ Código de la Fábrica de presencia (etapa 2 de PCS Central) para los repositori
 | `flujos/publicar.yml`, `flujos/revision.yml` | Flujos de GitHub Actions | `.github/workflows/` |
 | `instalar.py` | Copia todo lo anterior y crea `fabrica/config.json`; con `--verificar`, compara | no |
 | `navegador.py` | Controles en Chromium a 390 y 1360 px y capturas para el revisor visual | no (corre desde acá) |
+| `orquestador.md` | Lo que sigue cada corrida de la tarea programada "Fábrica de sitios" | no (lo lee la tarea desde acá) |
+| `agentes/` | Instrucciones del especificador, el constructor y el aprobador. Los revisores son las skills de `skills/` | no |
+| `sitios.json` | Los sitios con la fábrica instalada, que recorre la tarea | no |
 | `pruebas/` | Pruebas de todo lo anterior | no |
 
 `revisar.py` y `navegador.py` corren desde este repositorio, que es público: la revisión de cada sitio lo baja en cada corrida.
@@ -29,6 +32,20 @@ Código de la Fábrica de presencia (etapa 2 de PCS Central) para los repositori
 Después de publicar, `publicar_sitio.py` espera el build de Cloudflare y controla en vivo: `version.json` con el commit publicado, todas las imágenes de la página respondiendo 200 y `www` con 301 al dominio. Si algo falla, lo deja en el PR (o en un pedido) con `necesita-manu`.
 
 La primera publicación sellada de un sitio (cuando todavía no existe la rama `produccion`) solo la lanza Manu.
+
+## La tarea programada "Fábrica de sitios"
+
+Corre cada hora de 9 a 20 (hora de Buenos Aires), aparte de la Fábrica de software del panel, y sigue `orquestador.md`. Por corrida hace una sola cosa, entre todos los sitios de `sitios.json`:
+
+1. Corrige un PR suyo con la revisión en rojo o retoma un pedido que quedó cortado.
+2. Pasa el revisor visual por las fotos que publicó el panel y todavía no miró. Si una foto tiene algo que bloquea (una cara de un tercero, una patente), abre un pedido y te avisa.
+3. Toma el pedido abierto más viejo con la etiqueta `fabrica`: lo especifica, lo construye en una rama, espera los controles, lo hace revisar por los cuatro revisores de `skills/` y el aprobador le pone `listo`. Desde ahí `publicar.yml` del sitio publica lo de riesgo bajo y deja lo de riesgo alto esperando a Manu.
+
+Si no hay nada, termina enseguida. Le avisa a Manu al celular solo cuando hay algo para aprobar o un pedido trabado.
+
+**Para pedirle un cambio:** un pedido (issue) en el repositorio del sitio, con la etiqueta `fabrica`, que diga qué cambiar. En una conversación alcanza con "abre un pedido para la fábrica de sitios en el sitio de …: …". Un pedido tiene que traer los datos que solo da el cliente (horarios, garantías, zonas, precios): la fábrica no los inventa.
+
+**Sumar un sitio:** cuando su PR de instalación queda publicado, se agrega a `sitios.json` (repositorio y URL).
 
 ## Riesgo
 

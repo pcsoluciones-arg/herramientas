@@ -1,0 +1,6 @@
+{
+  "nota": "Sitios con la Fábrica de presencia instalada. Los recorre la tarea programada Fábrica de sitios (sitios/orquestador.md). Se suma uno cuando su PR de instalación queda publicado.",
+  "sitios": [
+    {"repo": "pcsoluciones-arg/sitio-plomerodebarrio", "negocio": "Plomero de Barrio", "url": "https://plomerodebarrio.com.ar/"}
+  ]
+}
