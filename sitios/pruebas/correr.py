@@ -303,6 +303,24 @@ def recorrido(evento, cambios, con_produccion=True, pr=None):
     return llamadas, (prod.stdout if prod.returncode == 0 else None), arbol_main, arbol_prod, salida
 
 
+def revision_con(checks):
+    viejo = publicar_sitio.api
+    publicar_sitio.api = lambda ruta, metodo="GET", datos=None: {"check_runs": checks}
+    try:
+        return publicar_sitio.revision_ok("abc")
+    finally:
+        publicar_sitio.api = viejo
+
+
+caso("revisión: el controles en skipped de Publicar no tapa el success de Revisión",
+     revision_con([{"id": 1, "name": "controles", "conclusion": "success"},
+                   {"id": 2, "name": "controles", "conclusion": "skipped"}]) == "success")
+caso("revisión: un controles nuevo en failure manda",
+     revision_con([{"id": 1, "name": "controles", "conclusion": "success"},
+                   {"id": 3, "name": "controles", "conclusion": "failure"}]) == "failure")
+caso("revisión: sin controles válido devuelve None",
+     revision_con([{"id": 2, "name": "controles", "conclusion": "skipped"}]) is None)
+
 FOTO = {"fotos/termo.webp": "W", "contenido.json": contenido(a=lambda c: c["trabajos"].insert(0, NUEVO))}
 ll, msj, am, ap, sal = recorrido("push", FOTO)
 caso("push del panel con riesgo bajo: sella y publica main",
