@@ -6,5 +6,6 @@ Leer `LEEME.md`. Índice general de PC Soluciones: documento del proyecto `claud
 - Una regla entra al revisor solo si un script la puede decidir sin equivocarse seguido. Si hace falta criterio (títulos directos, explicar lo que sí, tono), queda para un revisor humano o agente.
 - Si una regla da falsos positivos en material real, se ajusta o se baja a AVISO; no se deja sonando.
 - Cada regla nueva entra con su caso de prueba en `pruebas/` y `python3 pruebas/correr.py` tiene que pasar.
-- Sin bibliotecas externas: tiene que correr en la Mac, en la PC con Windows y en la nube tal cual.
+- Sin bibliotecas externas: tiene que correr en la Mac, en la PC con Windows y en la nube tal cual. La excepción es `sitios/navegador.py`, que necesita Playwright.
+- `sitios/` es la Fábrica de presencia (ver `sitios/LEEME.md`). Lo que `sitios/instalar.py` copia a los sitios no se edita en los sitios: se cambia acá y se vuelve a instalar.
 - Documentación en español neutro con tuteo, sin guiones largos. Commits firmados como Manuel Tonnelier (pcsolucionesbelgrano@gmail.com).

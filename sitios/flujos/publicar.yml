@@ -1,0 +1,96 @@
+# Fábrica de presencia: publica un sitio.
+# Cloudflare publica la rama produccion, y solo acepta commits con el sello que crea este flujo (fabrica/sello.py).
+#
+# Se dispara de tres formas:
+# - push a main (los commits del panel PCS): corre los controles de código y, si el riesgo es bajo, publica.
+# - revisión en verde de un PR, o la etiqueta "listo" del aprobador: si el riesgo es bajo, publica.
+# - Manu desde GitHub → Actions → Publicar → Run workflow, con el número del PR (o vacío para publicar main tal como
+#   está). Las sesiones de Claude no pueden lanzar flujos de Actions, así que ese lanzamiento es su aprobación.
+# Copiado por herramientas/sitios/instalar.py. No se edita acá: se cambia el original y se vuelve a instalar.
+name: Publicar
+
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: [Revisión]
+    types: [completed]
+  pull_request_target:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Número del pedido de cambio (PR) a aprobar. Vacío: publicar main tal como está."
+        required: false
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  # Solo en un push a main: los mismos controles que la revisión de un PR, sin permisos de escritura.
+  controles:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: sitio
+      - name: Herramientas
+        uses: actions/checkout@v4
+        with:
+          repository: pcsoluciones-arg/herramientas
+          path: herramientas
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Instalar el navegador de pruebas
+        run: |
+          pip install -q playwright
+          python3 -m playwright install --with-deps chromium > /dev/null
+      - name: Controles del sitio
+        working-directory: sitio
+        run: bash fabrica/controles.sh ../herramientas /tmp/capturas
+      - name: Guardar capturas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas
+          path: /tmp/capturas
+          if-no-files-found: ignore
+
+  publicar:
+    needs: controles
+    if: >-
+      always() &&
+      (needs.controles.result == 'success' || needs.controles.result == 'skipped') &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') &&
+      (github.event_name != 'pull_request_target' || github.event.label.name == 'listo')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      checks: read
+      id-token: write
+    steps:
+      # Siempre el código de main: nunca se ejecuta código de un PR con estos permisos.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Publicar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENTO: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number || inputs.pr }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python3 fabrica/publicar_sitio.py

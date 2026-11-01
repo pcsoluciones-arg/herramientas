@@ -21,7 +21,7 @@ Perfiles:
 | Perfil | Para qué | Reglas que suma |
 |---|---|---|
 | `texto` (por defecto) | Documentos, propuestas, informes | Guiones, idioma, títulos, marcadores, claves; zip, docx, pdf e imágenes si los hay |
-| `sitio` | La carpeta armada de un sitio (lo que se publica) | Lo anterior, más Open Graph, indexación, área segura, WhatsApp, copy público, firma del pie y schema |
+| `sitio` | La carpeta armada de un sitio (lo que se publica) | Lo anterior, más Open Graph (absoluto y del dominio del sitio), indexación, sitemap, robots y llms.txt, área segura, elementos fijos con mezcla o desenfoque, WhatsApp, copy público, firma del pie, schema (FAQ y LocalBusiness) y avisos de cabecera, imágenes y plazos de armado |
 | `panel` | El repositorio del panel | Lo de `texto`, más la escala de radios y de letra del CSS |
 | `carpeta` | La raíz de PC Soluciones en OneDrive | Solo nombres: qué hay en la raíz, `_BORRAR` de más, builds dentro de OneDrive |
 
@@ -36,9 +36,21 @@ Un archivo `.reglas.json` en la raíz del proyecto evita repetir opciones:
 ```json
 {"perfil": "sitio",
  "idioma": "voseo",
+ "url": "https://plomerodebarrio.com.ar/",
  "idioma_por_archivo": [["*.md", "neutro"]],
  "ignorar": ["fuente/*"],
  "preview": false}
+```
+
+En el perfil `sitio`, `url` (o `--url`) es la dirección publicada: `og:url`, `og:image` y el canonical tienen que ser de ese dominio. Si no se indica, se toma el dominio del canonical.
+
+## sitios/: Fábrica de presencia
+
+Código compartido de los repositorios `sitio-*`: sello, filtro de riesgo, publicación, controles y los flujos de GitHub Actions. `sitios/instalar.py` lo copia a `fabrica/` de cada sitio. Incluye `sitios/navegador.py`, que prueba la página armada en Chromium a 390 y 1360 px (scroll lateral, pie, elementos fijos, imágenes rotas, consola, contraste de botones, controles de 44 px, LCP) y deja capturas para el revisor visual. El detalle está en `sitios/LEEME.md`.
+
+```
+python3 sitios/navegador.py dist/ --capturas /tmp/capturas
+python3 sitios/instalar.py --verificar ../sitio-plomerodebarrio
 ```
 
 ## Cómo se usa desde otra conversación
@@ -49,5 +61,6 @@ Agregar el repositorio a la sesión (`pcsoluciones-arg/herramientas`) y correr `
 
 - Documentación y comentarios en español neutro con tuteo, sin guiones largos.
 - Sin claves ni datos de clientes.
-- Una regla nueva entra con su caso de prueba en `pruebas/`, y antes de subirla se corre `python3 pruebas/correr.py`.
+- Una regla nueva entra con su caso de prueba en `pruebas/`, y antes de subirla se corre `python3 pruebas/correr.py` (corre también las pruebas de `sitios/`).
+- `revisar.py` y lo que se copia a los sitios usan solo la biblioteca estándar. `navegador.py` es la excepción: necesita Playwright con Chromium.
 - Commits firmados como Manuel Tonnelier (pcsolucionesbelgrano@gmail.com).
