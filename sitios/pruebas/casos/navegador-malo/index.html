@@ -1,0 +1,20 @@
+<!doctype html><html lang="es-AR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Prueba con fallas</title>
+<style>
+body{margin:0;font-family:sans-serif;padding-bottom:80px}
+.ancha{width:1600px;height:40px;background:#eee}
+.grano{position:fixed;inset:0;mix-blend-mode:multiply;pointer-events:none;background:rgba(0,0,0,.02)}
+.b{display:inline-block;padding:14px 20px;background:#1FAF55;color:#fff;text-decoration:none}
+.chico{display:inline-block;padding:2px 4px;background:#123;color:#fff;text-decoration:none}
+footer{background:#222;color:#fff;padding:20px}
+</style></head><body>
+<div class="grano"></div>
+<div class="ancha">Esta franja es más ancha que la pantalla</div>
+<h1>Prueba con fallas</h1>
+<img src="no-existe.webp" alt="Foto que no está" width="100" height="100">
+<a class="b" href="#">Escribime por WhatsApp</a>
+<a class="chico" href="#">x</a>
+<footer>Pie</footer>
+<script>noExiste();</script>
+</body></html>

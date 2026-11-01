@@ -11,10 +11,11 @@ Uso:
     --perfil  texto (por defecto), sitio, panel, entrega o carpeta. Cada perfil suma
               reglas propias (ver PERFILES más abajo).
     --idioma  neutro, voseo o libre. Si no se indica, se toma de .reglas.json o queda libre.
+    --url     URL del sitio publicado (perfil sitio): og:url, og:image y canonical tienen que ser de ese dominio.
     --json    salida en JSON en vez de texto.
 
 Si en la raíz del proyecto hay un archivo .reglas.json, se toma de ahí la configuración:
-    {"perfil": "sitio", "idioma": "voseo",
+    {"perfil": "sitio", "idioma": "voseo", "url": "https://plomerodebarrio.com.ar/",
      "idioma_por_archivo": [["*.md", "neutro"], ["src/*", "voseo"]],
      "ignorar": ["dist/*", "relevamiento/*"],
      "preview": false}
@@ -31,6 +32,7 @@ import re
 import struct
 import sys
 import unicodedata
+import urllib.parse
 import zipfile
 
 # ---------------------------------------------------------------- vocabulario
@@ -102,6 +104,9 @@ def regla_idioma(ruta, texto, idioma):
 
 TITULO_MD = re.compile(r"^\s{0,3}#{1,6}\s+(.*)$")
 TITULO_HTML = re.compile(r"(?is)<h[1-6][^>]*>(.*?)</h[1-6]>")
+TITULO_H1 = re.compile(r"(?is)<h1\b")
+NUMEROS = r"\d+|un|una|dos|tres|cuatro|cinco|seis|siete|ocho|diez|quince|veinte"
+PLAZO_ARMADO = re.compile(r"(?i)\b(p[aá]gina|sitio|web|landing|tienda)s?\b[^.!?\n]{0,40}?\b(" + NUMEROS + r")\s*(d[ií]as?|semanas?|horas?|hs)\b")
 INVERSION = re.compile(r"(?i)\bno (es|son|se trata de|era|fue)\b[^.?!]{1,80}?[:;,.]\s*(es|son|se trata de|sino|era|fue)\b")
 
 
@@ -171,14 +176,44 @@ def medida_imagen(ruta):
     return None
 
 
-def regla_sitio(ruta, h, preview):
+def imagenes(n):
+    return "1 imagen" if n == 1 else "%d imágenes" % n
+
+
+PROVISORIOS = re.compile(r"(^|\.)(netlify\.app|workers\.dev|pages\.dev|vercel\.app|github\.io)$", re.I)
+
+
+def host_de(url):
+    return (urllib.parse.urlparse(url).hostname or "").lower()
+
+
+def sin_www(h):
+    return h[4:] if h.startswith("www.") else h
+
+
+def regla_sitio(ruta, h, preview, url_sitio=None, es_raiz=False):
     visible = texto_visible(h)
     base = os.path.dirname(ruta)
+    canonical = re.search(r'(?is)<link[^>]+rel=["\']canonical["\'][^>]*>', h)
+    canonical = re.search(r'(?is)href=["\']([^"\']*)["\']', canonical.group()).group(1) if canonical and "href" in canonical.group() else None
+    # El dominio del sitio sale de .reglas.json ("url") o de --url; si no está, del canonical.
+    dominio = sin_www(host_de(url_sitio or canonical or ""))
 
     # Open Graph completo y su imagen en 1200 × 630
     faltan = [p for p in ("og:title", "og:description", "og:image", "og:url") if not meta(h, p)]
     if faltan:
         anotar("FALLA", ruta, 0, "open-graph", "faltan etiquetas: " + ", ".join(faltan))
+    # og:url y og:image absolutas y, en lo publicado, con el dominio del sitio (sin netlify.app ni workers.dev)
+    for p in ("og:url", "og:image"):
+        v = meta(h, p)
+        if not v:
+            continue
+        if not re.match(r"(?i)https?://", v):
+            anotar("FALLA", ruta, 0, "open-graph", "%s no es una URL absoluta (%s): WhatsApp no la toma" % (p, v[:60]))
+        elif not preview and PROVISORIOS.search(host_de(v)):
+            anotar("FALLA", ruta, 0, "open-graph", "%s apunta a un dominio provisorio (%s): va el del sitio" % (p, host_de(v)))
+        elif not preview and dominio and sin_www(host_de(v)) != dominio:
+            anotar("FALLA", ruta, 0, "open-graph", "%s apunta a %s y el sitio es %s" % (p, host_de(v), dominio))
     img = meta(h, "og:image")
     if img:
         local = os.path.join(base, re.sub(r"^https?://[^/]+/", "", img).lstrip("/"))
@@ -194,8 +229,12 @@ def regla_sitio(ruta, h, preview):
         anotar("FALLA", ruta, 0, "indexacion", "es una preview y no tiene noindex")
     if not preview and "noindex" in robots:
         anotar("FALLA", ruta, 0, "indexacion", "tiene noindex y es el sitio publicado")
-    if not preview and not re.search(r'(?i)<link[^>]+rel=["\']canonical["\']', h):
+    if not preview and not canonical:
         anotar("FALLA", ruta, 0, "indexacion", "falta <link rel=\"canonical\">")
+    elif not preview and url_sitio and es_raiz and canonical.rstrip("/") != url_sitio.rstrip("/"):
+        anotar("FALLA", ruta, 0, "indexacion", "el canonical (%s) no es la URL del sitio (%s)" % (canonical, url_sitio))
+    elif not preview and (PROVISORIOS.search(host_de(canonical)) or (dominio and sin_www(host_de(canonical)) != dominio)):
+        anotar("FALLA", ruta, 0, "indexacion", "el canonical apunta a otro dominio (%s)" % canonical)
 
     # Área segura del iPhone
     vp = meta(h, "viewport") or ""
@@ -225,10 +264,53 @@ def regla_sitio(ruta, h, preview):
         anotar("AVISO", ruta, 0, "copy-publico", "promesa vieja «%s»: la vigente es «Tu página lista en 3 días»" % m.group())
 
     # Firma del pie
-    if "pcsoluciones.com.ar" in ruta.replace(os.sep, "/").lower() or "fuente-del-sitio" in ruta:
+    propio = "pcsoluciones.com.ar" in ruta.replace(os.sep, "/").lower() or "fuente-del-sitio" in ruta or dominio == "pcsoluciones.com.ar"
+    if propio:
         pass  # el sitio propio no se firma a sí mismo
     elif not re.search(r'(?is)<footer.*?pcsoluciones\.com\.ar.*?</footer>', h):
         anotar("AVISO", ruta, 0, "firma", "el pie no enlaza a pcsoluciones.com.ar (firma «Sitio desarrollado por PC Soluciones»)")
+
+    # Plazos de armado: en el sitio de un cliente no se dice cuánto llevó o lleva armar la página.
+    # El sitio propio sí los usa: es la promesa comercial («Tu página lista en 3 días»).
+    if not propio:
+        for n, m, _ in lineas_con(PLAZO_ARMADO, visible):
+            anotar("AVISO", ruta, 0, "plazos", "frase de plazo de armado en el sitio de un cliente: «%s»" % re.sub(r"\s+", " ", m.group())[:70])
+
+    # Cabecera: theme-color, idioma, título, descripción y un solo H1
+    if not meta(h, "theme-color"):
+        anotar("AVISO", ruta, 0, "cabecera", "falta <meta name=\"theme-color\"> (el color de las barras del navegador)")
+    lang = re.search(r'(?is)<html\b[^>]*\blang=["\']([^"\']*)["\']', h)
+    if not lang or lang.group(1).lower() != "es-ar":
+        anotar("AVISO", ruta, 0, "cabecera", "el idioma de la página es %s y va lang=\"es-AR\"" % (("«%s»" % lang.group(1)) if lang else "ninguno"))
+    titulo = re.search(r"(?is)<title[^>]*>(.*?)</title>", h)
+    titulo = re.sub(r"\s+", " ", html.unescape(titulo.group(1))).strip() if titulo else ""
+    if not titulo:
+        anotar("AVISO", ruta, 0, "cabecera", "falta <title>")
+    elif len(titulo) > 60:
+        anotar("AVISO", ruta, 0, "cabecera", "el título tiene %d caracteres (hasta 60 se ve entero en Google): %s" % (len(titulo), titulo[:70]))
+    desc = meta(h, "description")
+    if not desc:
+        anotar("AVISO", ruta, 0, "cabecera", "falta <meta name=\"description\">")
+    elif len(html.unescape(desc)) > 160:
+        anotar("AVISO", ruta, 0, "cabecera", "la descripción tiene %d caracteres (hasta 160)" % len(html.unescape(desc)))
+    h1 = len(TITULO_H1.findall(h))
+    if h1 != 1:
+        anotar("AVISO", ruta, 0, "cabecera", "la página tiene %d H1 (va uno solo)" % h1)
+
+    # Imágenes con alt, width y height (alt="" vale: es una imagen decorativa)
+    sin_alt, sin_medida = [], []
+    for m in re.finditer(r"(?is)<img\b[^>]*>", h):
+        etiqueta = m.group()
+        src = re.search(r'(?is)\bsrc=["\']([^"\']*)["\']', etiqueta)
+        nombre = os.path.basename(src.group(1))[:40] if src and not src.group(1).startswith("data:") else "imagen embebida"
+        if not re.search(r"(?i)\balt\s*=", etiqueta):
+            sin_alt.append(nombre)
+        if not (re.search(r"(?i)\swidth\s*=", etiqueta) and re.search(r"(?i)\sheight\s*=", etiqueta)):
+            sin_medida.append(nombre)
+    if sin_alt:
+        anotar("AVISO", ruta, 0, "imagenes", "%s sin alt: %s" % (imagenes(len(sin_alt)), ", ".join(sin_alt[:4])))
+    if sin_medida:
+        anotar("AVISO", ruta, 0, "imagenes", "%s sin width y height (la página salta al cargar): %s" % (imagenes(len(sin_medida)), ", ".join(sin_medida[:4])))
 
     # Schema igual al texto visible: cada pregunta de un FAQPage tiene que estar en la página
     plano = re.sub(r"\s+", " ", visible).lower()
@@ -248,7 +330,117 @@ def regla_sitio(ruta, h, preview):
                     q = re.sub(r"\s+", " ", html.unescape(x["name"])).strip().lower()
                     if q and q not in plano:
                         anotar("FALLA", ruta, 0, "schema", "pregunta del schema que no está en el texto visible: %s" % x["name"][:70])
+                if es_negocio_local(x.get("@type")):
+                    regla_negocio_local(ruta, x, plano, visible)
                 pila.extend(x.values())
+
+
+# Tipos de schema.org que son un LocalBusiness (o lo heredan). Los que terminan en Store, Business, Contractor,
+# Agency, Shop o Salon también cuentan.
+TIPOS_LOCAL = {
+    "LocalBusiness", "Plumber", "Electrician", "HVACBusiness", "Locksmith", "HousePainter", "RoofingContractor",
+    "GeneralContractor", "MovingCompany", "ProfessionalService", "Restaurant", "CafeOrCoffeeShop", "Bakery",
+    "Dentist", "Physician", "Physiotherapy", "Optician", "Pharmacy", "Attorney", "Notary", "AccountingService",
+    "RealEstateAgent", "AutoRepair", "AutoDealer", "AutoWash", "GasStation", "Florist", "HairSalon", "NailSalon",
+    "DaySpa", "ExerciseGym", "ChildCare", "DryCleaningOrLaundry", "LegalService", "FinancialService",
+    "MedicalClinic", "VeterinaryCare", "BedAndBreakfast", "Hotel", "Hostel", "Winery", "Brewery", "BarOrPub",
+}
+
+
+def es_negocio_local(tipo):
+    tipos = tipo if isinstance(tipo, list) else [tipo]
+    return any(isinstance(t, str) and (t in TIPOS_LOCAL or t.endswith(("Store", "Business", "Contractor", "Agency", "Shop", "Salon")))
+               for t in tipos)
+
+
+def nombres_de_zona(area):
+    """Nombres de las zonas de areaServed, sin lo que va después de la coma («Núñez, Ciudad de Buenos Aires» → Núñez)."""
+    if isinstance(area, list):
+        return [z for a in area for z in nombres_de_zona(a)]
+    if isinstance(area, dict):
+        area = area.get("name")
+    return [area.split(",")[0].strip()] if isinstance(area, str) and area.strip() else []
+
+
+def regla_negocio_local(ruta, x, plano, visible):
+    """Schema LocalBusiness igual al texto visible: nombre, teléfono y zonas."""
+    nombre = x.get("name")
+    if isinstance(nombre, str) and re.sub(r"\s+", " ", html.unescape(nombre)).strip().lower() not in plano:
+        anotar("FALLA", ruta, 0, "schema", "el nombre del negocio en el schema («%s») no está en el texto visible" % nombre[:60])
+    tel = re.sub(r"\D", "", str(x.get("telephone") or ""))
+    if len(tel) >= 8 and tel[-8:] not in re.sub(r"\D", "", visible):
+        anotar("FALLA", ruta, 0, "schema", "el teléfono del schema (%s) no está en el texto visible" % x.get("telephone"))
+    faltan = [z for z in nombres_de_zona(x.get("areaServed")) if re.sub(r"\s+", " ", z).lower() not in plano]
+    if faltan:
+        anotar("FALLA", ruta, 0, "schema", "zonas del schema que no están en el texto visible: %s" % ", ".join(faltan[:6]))
+
+
+def bloques_css(css):
+    """Une las declaraciones de cada selector (aunque estén en reglas separadas): {selector: (línea, {prop: valor})}."""
+    css = re.sub(r"(?s)/\*.*?\*/", lambda m: re.sub(r"[^\n]", " ", m.group()), css)
+    res = {}
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+        linea = css.count("\n", 0, m.start(2)) + 1
+        decl = {}
+        for d in m.group(2).split(";"):
+            if ":" in d:
+                k, v = d.split(":", 1)
+                decl[k.strip().lower()] = v.strip().lower().replace("!important", "").strip()
+        for sel in m.group(1).split(","):
+            sel = re.sub(r"\s+", " ", sel).strip()
+            if sel and not sel.startswith("@"):
+                l0, d0 = res.get(sel, (linea, {}))
+                d0.update(decl)
+                res[sel] = (l0, d0)
+    return res
+
+
+CERO = re.compile(r"^0(px|%|vh|vw|rem|em)?$")
+LLENO = re.compile(r"^100(%|vh|vw|dvh|svh|lvh|dvw|svw|lvw)$")
+
+
+def cubre_pantalla(d):
+    inset = d.get("inset", "").split()
+    if inset and all(CERO.match(v) for v in inset):
+        return True
+    alto = (CERO.match(d.get("top", "x")) and CERO.match(d.get("bottom", "x"))) or LLENO.match(d.get("height", ""))
+    ancho = (CERO.match(d.get("left", "x")) and CERO.match(d.get("right", "x"))) or LLENO.match(d.get("width", ""))
+    return bool(alto and ancho)
+
+
+def regla_fijo_css(ruta, css, linea0=0):
+    """position:fixed que cubre la pantalla con mix-blend-mode o backdrop-filter (ver area-segura-iphone)."""
+    for sel, (linea, d) in bloques_css(css).items():
+        if d.get("position") != "fixed" or not cubre_pantalla(d):
+            continue
+        mezcla = d.get("mix-blend-mode", "normal") not in ("normal", "")
+        desenfoque = any(d.get(p, "none") not in ("none", "") for p in ("backdrop-filter", "-webkit-backdrop-filter"))
+        if mezcla or desenfoque:
+            anotar("FALLA", ruta, linea0 + linea, "fijo-mezcla",
+                   "%s es position:fixed, cubre la pantalla y tiene %s: en iPhone rompe lo fijo y pinta fuera de la página. "
+                   "Pasarlo a position:absolute sobre el body (body{position:relative})" % (sel[:50], "mix-blend-mode" if mezcla else "backdrop-filter"))
+
+
+def regla_publicado(carpeta, url_sitio):
+    """En lo publicado: sitemap.xml, robots.txt con Sitemap y sin bloquear todo, y llms.txt."""
+    r = lambda n: os.path.join(carpeta, n)
+    if not os.path.exists(r("sitemap.xml")):
+        anotar("FALLA", r("sitemap.xml"), 0, "publicado", "falta sitemap.xml")
+    elif url_sitio:
+        with open(r("sitemap.xml"), encoding="utf8", errors="replace") as f:
+            if url_sitio.rstrip("/") not in f.read():
+                anotar("AVISO", r("sitemap.xml"), 0, "publicado", "el sitemap no lista %s" % url_sitio)
+    if not os.path.exists(r("robots.txt")):
+        anotar("FALLA", r("robots.txt"), 0, "publicado", "falta robots.txt")
+    else:
+        with open(r("robots.txt"), encoding="utf8", errors="replace") as f:
+            robots = f.read()
+        if not re.search(r"(?im)^\s*sitemap:\s*https?://\S+", robots):
+            anotar("FALLA", r("robots.txt"), 0, "publicado", "robots.txt no dice dónde está el sitemap (Sitemap: https://…)")
+        if re.search(r"(?im)^\s*disallow:\s*/\s*$", robots):
+            anotar("FALLA", r("robots.txt"), 0, "publicado", "robots.txt bloquea todo el sitio (Disallow: /) y es el sitio publicado")
+    if not os.path.exists(r("llms.txt")):
+        anotar("FALLA", r("llms.txt"), 0, "publicado", "falta llms.txt (el resumen del sitio para las IA)")
 
 
 # ---------------------------------------------------------------- reglas del panel
@@ -373,9 +565,10 @@ def idioma_de(rel, config, idioma_cli):
 
 
 def archivos(rutas, ignorar, base):
+    """Devuelve (ruta, raíz): la raíz es la carpeta que se pasó por línea de comandos."""
     for r in rutas:
         if os.path.isfile(r):
-            yield r
+            yield r, os.path.dirname(r) or "."
             continue
         for actual, carpetas, nombres in os.walk(r):
             carpetas[:] = [c for c in carpetas if not c.startswith(".") and c not in ("node_modules", "_BORRAR", "__pycache__")]
@@ -383,10 +576,10 @@ def archivos(rutas, ignorar, base):
                 ruta = os.path.join(actual, n)
                 rel = os.path.relpath(ruta, base or r)
                 if not any(fnmatch.fnmatch(rel, p) for p in ignorar):
-                    yield ruta
+                    yield ruta, r
 
 
-def revisar(ruta, perfil, idioma, preview):
+def revisar(ruta, perfil, idioma, preview, url_sitio=None, raiz=None):
     ext = os.path.splitext(ruta)[1].lower()
     regla_nombre_ascii(ruta)
     if ext == ".zip":
@@ -410,6 +603,8 @@ def revisar(ruta, perfil, idioma, preview):
     if ext in EXT_CODIGO:
         if perfil == "panel" and ext in (".css",):
             regla_css(ruta, texto)
+        if perfil == "sitio" and ext == ".css":
+            regla_fijo_css(ruta, texto)
         return
     es_html = ext in (".html", ".htm")
     visible = texto_visible(texto) if es_html else texto
@@ -426,7 +621,10 @@ def revisar(ruta, perfil, idioma, preview):
     if ext != ".json":
         regla_marcadores(ruta, visible if es_html else texto)
     if es_html and perfil == "sitio":
-        regla_sitio(ruta, texto, preview)
+        es_raiz = os.path.basename(ruta) == "index.html" and raiz is not None and os.path.samefile(os.path.dirname(ruta) or ".", raiz)
+        regla_sitio(ruta, texto, preview, url_sitio, es_raiz)
+        for m in re.finditer(r"(?is)<style[^>]*>(.*?)</style>", texto):
+            regla_fijo_css(ruta, m.group(1), texto.count("\n", 0, m.start(1)))
     if es_html and perfil == "panel":
         regla_css(ruta, texto)
 
@@ -437,6 +635,7 @@ def main():
     ap.add_argument("--perfil", choices=["texto", "sitio", "panel", "entrega", "carpeta"])
     ap.add_argument("--idioma", choices=["neutro", "voseo", "libre"])
     ap.add_argument("--preview", action="store_true", help="la página es una preview (tiene que llevar noindex)")
+    ap.add_argument("--url", help="URL del sitio publicado (perfil sitio). Si no se indica, se toma de .reglas.json o del canonical")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
 
@@ -444,14 +643,20 @@ def main():
     perfil = a.perfil or config.get("perfil", "texto")
     preview = a.preview or bool(config.get("preview"))
     ignorar = config.get("ignorar", [])
+    url_sitio = a.url or config.get("url")
 
     if perfil == "carpeta":
         for r in a.rutas:
             regla_carpeta_raiz(r)
     else:
-        for ruta in archivos(a.rutas, ignorar, base):
+        for ruta, raiz in archivos(a.rutas, ignorar, base):
             rel = os.path.relpath(ruta, base) if base else ruta
-            revisar(ruta, perfil, idioma_de(rel, config, a.idioma), preview)
+            revisar(ruta, perfil, idioma_de(rel, config, a.idioma), preview, url_sitio, raiz)
+        # Lo publicado lleva sitemap, robots y llms.txt junto al index.html de la carpeta armada.
+        if perfil == "sitio" and not preview:
+            for r in a.rutas:
+                if os.path.isdir(r) and os.path.exists(os.path.join(r, "index.html")):
+                    regla_publicado(r, url_sitio)
 
     if a.json:
         print(json.dumps(hallazgos, ensure_ascii=False, indent=1))

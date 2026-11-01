@@ -1,0 +1,74 @@
+# Fábrica de presencia: controles de código en cada pedido de cambio (PR) contra main de un sitio.
+# El nombre del trabajo ("controles") es el que publicar_sitio.py busca antes de publicar.
+# Copiado por herramientas/sitios/instalar.py. No se edita acá: se cambia el original y se vuelve a instalar.
+name: Revisión
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: revision-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  controles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: sitio
+          fetch-depth: 0
+
+      # Repositorio público: no hace falta token.
+      - name: Herramientas
+        uses: actions/checkout@v4
+        with:
+          repository: pcsoluciones-arg/herramientas
+          path: herramientas
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Instalar el navegador de pruebas
+        run: |
+          pip install -q playwright
+          python3 -m playwright install --with-deps chromium > /dev/null
+
+      - name: Controles del sitio
+        working-directory: sitio
+        run: bash fabrica/controles.sh ../herramientas /tmp/capturas
+
+      - name: Filtro de riesgo
+        if: always()
+        working-directory: sitio
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          base=$(git merge-base "$BASE" "$HEAD")
+          python3 fabrica/riesgo_sitio.py "$base" "$HEAD" | tee -a "$GITHUB_STEP_SUMMARY"
+          nivel=$(python3 fabrica/riesgo_sitio.py "$base" "$HEAD" --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["riesgo"])')
+          otro=$([ "$nivel" = bajo ] && echo alto || echo bajo)
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/$PR/labels/riesgo:$otro" > /dev/null 2>&1 || true
+          gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/labels" -f "labels[]=riesgo:$nivel" > /dev/null
+
+      - name: Guardar capturas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas
+          path: /tmp/capturas
+          if-no-files-found: ignore
