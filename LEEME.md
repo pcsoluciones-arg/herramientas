@@ -46,7 +46,7 @@ En el perfil `sitio`, `url` (o `--url`) es la dirección publicada: `og:url`, `o
 
 ## sitios/: Fábrica de presencia
 
-Código compartido de los repositorios `sitio-*`: sello, filtro de riesgo, publicación, controles y los flujos de GitHub Actions. `sitios/instalar.py` lo copia a `fabrica/` de cada sitio. Incluye `sitios/navegador.py`, que prueba la página armada en Chromium a 390 y 1360 px (scroll lateral, pie, elementos fijos, imágenes rotas, consola, contraste de botones, controles de 44 px, LCP) y deja capturas para el revisor visual. El detalle está en `sitios/LEEME.md`.
+Código compartido de los repositorios `sitio-*`: sello, filtro de riesgo, publicación, controles y los flujos de GitHub Actions. `sitios/instalar.py` lo copia a `fabrica/` de cada sitio. Incluye `sitios/navegador.py`, que prueba la página armada en Chromium a 390 y 1360 px (scroll lateral, pie, elementos fijos, imágenes rotas, consola, contraste de botones, controles de 44 px, LCP) y deja capturas para el revisor visual. También vive acá la Fábrica de sitios: `sitios/orquestador.md` (lo sigue la tarea programada "Fábrica de sitios"), sus agentes en `sitios/agentes/` y la lista de sitios con la fábrica en `sitios/sitios.json`. El detalle está en `sitios/LEEME.md`.
 
 ```
 python3 sitios/navegador.py dist/ --capturas /tmp/capturas
