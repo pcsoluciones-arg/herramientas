@@ -53,6 +53,14 @@ python3 sitios/navegador.py dist/ --capturas /tmp/capturas
 python3 sitios/instalar.py --verificar ../sitio-plomerodebarrio
 ```
 
+## skills/: revisores de la Fábrica de presencia
+
+Los cuatro revisores de los sitios y las piezas (idioma y estilo, técnica, SEO y GEO, visual), escritos como skills. Cada uno recibe el informe de los controles de código y devuelve un JSON con su veredicto. Detalle en `skills/LEEME.md`.
+
+## repertorio/: copia del Repertorio de estilo
+
+Copia exacta del Repertorio de estilo de Manu (artifact de claude.ai), para los agentes que no leen artifacts. No se edita a mano: ver `repertorio/LEEME.md`.
+
 ## Cómo se usa desde otra conversación
 
 Agregar el repositorio a la sesión (`pcsoluciones-arg/herramientas`) y correr `revisar.py` sobre lo que se va a publicar o entregar. En la Mac, si hace falta, copiar `revisar.py` a `~/Trabajo-local/` y correrlo desde ahí: no va dentro de OneDrive.

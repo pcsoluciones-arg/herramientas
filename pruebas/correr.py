@@ -59,6 +59,25 @@ with tempfile.TemporaryDirectory() as d:
     errores += not ok
     print(("ok   " if ok else "MAL  ") + "zip con un archivo vacío")
 
+# La copia del Repertorio de estilo es exacta: cada archivo tiene el sha256 que publica el artifact.
+import hashlib
+REPERTORIO = os.path.join(AQUI, "..", "repertorio")
+with open(os.path.join(REPERTORIO, "huellas.json"), encoding="utf8") as f:
+    huellas = json.load(f)
+distintos = []
+for ruta, sha in huellas.items():
+    archivo = os.path.join(REPERTORIO, ruta)
+    if not os.path.exists(archivo):
+        distintos.append(ruta + " (falta)")
+        continue
+    with open(archivo, "rb") as f:
+        if hashlib.sha256(f.read()).hexdigest() != sha:
+            distintos.append(ruta)
+ok = not distintos and len(huellas) >= 30
+errores += not ok
+print(("ok   " if ok else "MAL  ") + "repertorio: %d archivos iguales al artifact" % (len(huellas) - len(distintos))
+      + ("" if ok else "; distintos: " + ", ".join(distintos)))
+
 print("\n== Fábrica de presencia (sitios/)")
 errores += subprocess.run([sys.executable, os.path.join(AQUI, "..", "sitios", "pruebas", "correr.py")]).returncode != 0
 
