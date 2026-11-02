@@ -84,6 +84,9 @@ def numero_pr():
 def revision_ok(sha):
     runs = api(f"commits/{sha}/check-runs?per_page=100")["check_runs"]
     r = [c for c in runs if c["name"] == CHECK_REVISION]
+    # El flujo Publicar tiene su propio job "controles", salteado cuando lo dispara una etiqueta o la revisión:
+    # ese no cuenta como resultado de la revisión.
+    r = [c for c in r if c["conclusion"] != "skipped"] or r
     if not r:
         return None
     return max(r, key=lambda c: c["id"])["conclusion"]

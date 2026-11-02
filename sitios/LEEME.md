@@ -60,6 +60,8 @@ Sale solo, si todo el cambio está en:
 
 Todo lo demás espera a Manu: `build.py`, `wrangler.toml`, `secciones.json`, `.reglas.json`, `CLAUDE.md`, `marca.json`, `publico/`, `fuente/`, estilos y código, `.github/` y `fabrica/`.
 
+**Sitio en vista previa** (`"preview": true` en el `.reglas.json` de `main`: sin dominio, con noindex, lo ven solo Manu y el cliente): todo sale solo, diseño y código incluidos, salvo `.reglas.json`, `wrangler.toml`, `CLAUDE.md`, `.github/` y `fabrica/`. Lo decidió Manu el 2/11/2026. El PR que lanza el sitio con su dominio saca `preview` y es de riesgo alto; desde ahí vuelve la regla de arriba.
+
 ## Instalar en un sitio nuevo
 
 Es el paso 3 del plan para cada sitio, en un PR del sitio (riesgo alto: lo aprueba Manu).

@@ -18,6 +18,11 @@ Riesgo bajo (todo el cambio tiene que estar acá):
 Todo lo demás es de riesgo alto: build.py, wrangler.toml, secciones.json, .reglas.json, CLAUDE.md, marca.json,
 publico/, fuente/, estilos y código, .github/, fabrica/ (la fábrica no puede aflojar sus propias reglas).
 
+Sitio en vista previa: si el .reglas.json de la BASE dice "preview": true (sin dominio, con noindex, lo ven solo
+Manu y el cliente), todo es de riesgo bajo salvo lo que define cómo y dónde se publica: .reglas.json, wrangler.toml,
+CLAUDE.md, .github/ y fabrica/. Se lee de la base y no del cambio, así un cambio no puede ponerse en vista previa a sí
+mismo. Al lanzar el sitio, el PR que saca "preview" es de riesgo alto y desde ahí vuelve la regla normal.
+
 El original vive en pcsoluciones-arg/herramientas (sitios/); instalar.py lo copia a fabrica/ de cada sitio.
 
 Uso:
@@ -38,6 +43,8 @@ ALTO = [
     "publico/*", "fuente/*", ".github/*", "fabrica/*",
     "*.css", "*.js", "*.mjs", "*.html", "*.htm", "*.toml", "*.py", "package.json", "package-lock.json",
 ]
+# En vista previa, lo único que sigue esperando a Manu.
+ALTO_EN_VISTA_PREVIA = [".reglas.json", "wrangler.toml", "CLAUDE.md", ".github/*", "fabrica/*"]
 FOTOS = {"fotos": (".webp", ".jpg", ".jpeg", ".png", ".avif"), "ficha-google": (".jpg", ".jpeg", ".png")}
 MAX_LINEAS = 300
 CAMPOS_ITEM = {"id", "titulo", "bajada", "fotos"}
@@ -77,7 +84,33 @@ def coincide(ruta, patrones):
     return any(fnmatch.fnmatch(ruta, p) for p in patrones)
 
 
+def en_vista_previa(rev):
+    try:
+        return json.loads(mostrar(rev, ".reglas.json") or "{}").get("preview") is True
+    except (ValueError, AttributeError):
+        return False
+
+
+def evaluar_vista_previa(base, head):
+    motivos, cambios, total = [], [], 0
+    for c in git("diff", "--numstat", f"{base}...{head}").splitlines():
+        a, q, _ = c.split("\t", 2)
+        total += (int(a) if a.isdigit() else 0) + (int(q) if q.isdigit() else 0)
+    for l in git("diff", "--name-status", "--no-renames", f"{base}...{head}").splitlines():
+        if not l:
+            continue
+        ruta = l.split("\t")[-1]
+        if coincide(ruta, ALTO_EN_VISTA_PREVIA):
+            motivos.append(f"Toca {ruta}, que define cómo y dónde se publica: necesita aprobación aun en vista previa.")
+        else:
+            cambios.append(f"vista previa: {ruta}")
+    return {"riesgo": "alto" if motivos else "bajo", "motivos": list(dict.fromkeys(motivos)),
+            "cambios": cambios, "lineas": total, "vista_previa": True}
+
+
 def evaluar(base, head):
+    if en_vista_previa(base):
+        return evaluar_vista_previa(base, head)
     motivos, cambios = [], []
     total = 0
     for c in git("diff", "--numstat", f"{base}...{head}").splitlines():
