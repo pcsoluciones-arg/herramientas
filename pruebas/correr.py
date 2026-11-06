@@ -49,6 +49,19 @@ with tempfile.TemporaryDirectory() as d:
     errores += not ok
     print(("ok   " if ok else "MAL  ") + "plazos: el sitio propio no avisa")
 
+# 5/11/2026: PDF con transparencias (AVISO "pdf"); el mismo PDF sin /SMask no avisa
+with tempfile.TemporaryDirectory() as d:
+    base = b"%PDF-1.4\n1 0 obj << /Type /Page /MediaBox [0 0 595.28 841.89] >> endobj\n"
+    for nombre, cuerpo, espera in (("con.pdf", base + b"2 0 obj << /Type /XObject /SMask 3 0 R >> endobj\n", True), ("sin.pdf", base, False)):
+        ruta = os.path.join(d, nombre)
+        with open(ruta, "wb") as f:
+            f.write(cuerpo)
+        r = subprocess.run([sys.executable, REVISAR, "--json", ruta], capture_output=True, text=True)
+        hallado = any(x["regla"] == "pdf" and "transparencias" in x["detalle"] for x in json.loads(r.stdout))
+        ok = hallado == espera
+        errores += not ok
+        print(("ok   " if ok else "MAL  ") + "pdf %s transparencias" % ("con" if espera else "sin"))
+
 with tempfile.TemporaryDirectory() as d:
     z = os.path.join(d, "paquete.zip")
     with zipfile.ZipFile(z, "w") as f:

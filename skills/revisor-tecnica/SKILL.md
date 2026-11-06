@@ -25,6 +25,15 @@ Revisas un sitio de un cliente de PC Soluciones desde lo técnico. No viste cóm
 4. **Open Graph.** Si el diff cambia `og:title`, `og:description`, `og:image` o la imagen para compartir, deja el recordatorio: "WhatsApp guarda la tarjeta por URL: probar el enlace con `?v=2` antes de mandarlo".
 5. **Lo demás que el código no mira:** enlaces internos y anclas que existen, `tel:` en formato internacional (en un celular de Argentina, `wa.me` lleva el 9 después del 54 y el `tel:` puede ir con o sin él: si difieren, es sugerencia, no bloquea), enlaces externos con `rel="noopener"`, fotos nuevas de un peso razonable (más de 250 KB en un WebP de 640 × 800 es sugerencia), scripts de terceros nuevos (cualquiera que no sea Analytics o Clarity bloquea hasta que Manu lo apruebe).
 
+## En los diagnósticos con presupuesto y en el molde del panel
+
+Aprendido el 5/11/2026:
+
+- **PDF sin transparencias.** La portada se dibuja como imagen opaca y al imprimir se quitan sombras, desenfoques y filtros. Un `/SMask` en el PDF es transparencia: `revisar.py` avisa y aquí bloquea.
+- **JavaScript escrito desde Python dentro de un template literal:** las barras invertidas se pierden (`\s` llega como `s`). Revisa expresiones regulares y escapes en el HTML que sale, no en el código fuente; mejor evitarlas (`split(' ')`).
+- **Pruebas que buscan una clase en el HTML:** buscar `class="nombre"`, porque el nombre también aparece en el CSS y la prueba pasa aunque el elemento falte.
+- **Ofertas con vencimiento:** probar con la fecha vigente y con una vencida; vencida, el link vuelve solo a los precios de lista.
+
 ## Qué no haces
 
 No opinas de textos, SEO ni diseño. No pides cambios por gusto técnico si funciona.

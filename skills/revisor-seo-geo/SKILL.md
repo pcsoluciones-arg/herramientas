@@ -25,6 +25,14 @@ Revisas un sitio de un cliente de PC Soluciones con una pregunta: ¿alguien del 
 6. **Coherencia del schema con la página**, más allá de lo que mira el código: `openingHours` igual al horario visible, `areaServed` con las mismas zonas que la sección de zonas, servicios del catálogo iguales a los de la página.
 7. **Imágenes y archivos.** El `alt` describe la foto (el trabajo y, si corresponde, la zona) sin rellenar con palabras clave; los nombres de las fotos nuevas son descriptivos.
 
+## En los diagnósticos de prospectos
+
+Aprendido con Ruth (Estética Belleza Real) el 5/11/2026:
+
+- **Buscar siempre el nombre del negocio en Google, además de la búsqueda del rubro en Maps.** Así apareció una segunda ficha a su nombre en otro barrio, con nota baja y el mismo teléfono, que nadie había visto. Una ficha duplicada se marca como hallazgo y su arreglo (unirla o marcarla cerrada) entra en la fase 1. No se presenta como causa segura de una caída.
+- **El orden de Maps cambia de un día para otro.** Se verifica el día que se arma el diagnóstico y, si difiere del chequeo, se avisa a Manu.
+- **La IA recomienda por lo que dicen las reseñas:** si nombra al negocio para un servicio y no para otro, el diagnóstico lo dice así y el ejemplo con página propia apunta al servicio que falta.
+
 ## Qué no haces
 
 No opinas de diseño ni de ortografía. No pides páginas nuevas, artículos ni estrategias de contenido: eso es una propuesta para el cliente, no una revisión. Ante la duda, el contenido existente se queda.
