@@ -21,6 +21,10 @@ ESPERADO = {
     "sitio-malo-publicado": (["--perfil", "sitio", "--idioma", "voseo"] + URL_CERRAJERO,
                              {"open-graph", "indexacion", "schema", "fijo-mezcla", "publicado"},
                              {"open-graph", "area-segura", "plazos", "cabecera", "imagenes"}),
+    # 6/11/2026, fábrica de diagnósticos: perfil diagnostico (caso inventado)
+    "diagnostico-bueno.json": (["--perfil", "diagnostico"], set(), set()),
+    "diagnostico-malo.json": (["--perfil", "diagnostico"],
+                              {"guiones", "trato", "cifras", "condicional", "sumas", "precios", "oferta"}, set()),
 }
 
 
@@ -48,6 +52,16 @@ with tempfile.TemporaryDirectory() as d:
     ok = "plazos" not in avisos
     errores += not ok
     print(("ok   " if ok else "MAL  ") + "plazos: el sitio propio no avisa")
+
+# PDF del diagnóstico con transparencias (/SMask)
+with tempfile.TemporaryDirectory() as d:
+    pdf = os.path.join(d, "diagnostico.pdf")
+    with open(pdf, "wb") as f:
+        f.write(b"%PDF-1.4\n1 0 obj << /Type /Page /MediaBox [0 0 595.28 841.89] >> endobj\n2 0 obj << /SMask 3 0 R >> endobj\n%%EOF")
+    hallado, _ = correr(pdf, ["--perfil", "diagnostico"])
+    ok = hallado == {"pdf"}
+    errores += not ok
+    print(("ok   " if ok else "MAL  ") + "PDF del diagnóstico con transparencias")
 
 with tempfile.TemporaryDirectory() as d:
     z = os.path.join(d, "paquete.zip")
