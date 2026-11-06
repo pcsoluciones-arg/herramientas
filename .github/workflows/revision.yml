@@ -1,0 +1,72 @@
+# Fábrica de herramientas: controles en cada pedido de cambio (PR) contra main.
+# Riesgo bajo: se junta solo en main. Riesgo alto: etiqueta espera-manu y espera su aprobación.
+# herramientas no publica nada: juntar en main es el último paso.
+name: Revisión
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: revision-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  controles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pruebas del revisor y de la Fábrica de presencia
+        run: python3 pruebas/correr.py
+
+      - name: Reglas de escritura en la documentación cambiada
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -e
+          docs=$(git diff --name-only --diff-filter=AM "$BASE...$HEAD" -- '*.md' | grep -v '^pruebas/casos/' || true)
+          if [ -n "$docs" ]; then python3 revisar.py --idioma neutro $docs; else echo "Sin documentación cambiada."; fi
+
+      - name: Filtro de riesgo
+        id: riesgo
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          CUERPO: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s' "$CUERPO" > /tmp/cuerpo.txt
+          python3 fabrica/riesgo.py "$BASE" "$HEAD" --cuerpo /tmp/cuerpo.txt | tee /tmp/riesgo.txt
+          echo "riesgo=$(head -1 /tmp/riesgo.txt | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Etiquetar y juntar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          RIESGO: ${{ steps.riesgo.outputs.riesgo }}
+        run: |
+          set -e
+          for e in riesgo:bajo riesgo:alto espera-manu; do gh label create "$e" --repo "$GITHUB_REPOSITORY" --force >/dev/null 2>&1 || true; done
+          if [ "$RIESGO" = "bajo" ]; then
+            gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label riesgo:bajo --remove-label riesgo:alto --remove-label espera-manu
+            gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --merge --delete-branch
+            echo "Riesgo bajo: juntado en main."
+          else
+            gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label riesgo:alto --add-label espera-manu --remove-label riesgo:bajo
+            { echo "**Riesgo alto: espera la aprobación de Manu.**"; echo; sed -n '2,$p' /tmp/riesgo.txt; } > /tmp/comentario.md
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file /tmp/comentario.md
+          fi
