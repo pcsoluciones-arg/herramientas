@@ -1,0 +1,154 @@
+{
+ "formato": "diagnostico/v2",
+ "prospecto": "ejemplo",
+ "slug": "ruedalibre",
+ "datos": {
+  "negocio": "Bicicletería Rueda Libre",
+  "corto": "Rueda Libre",
+  "zona": "Barrio Ejemplo",
+  "direccion": "Calle Falsa 123",
+  "rubro": "Bicicletería",
+  "fecha": "2026-11-06",
+  "codigo": "PCS-2026-11-EJE",
+  "acento": "#E4572E",
+  "trato": "vos",
+  "portada": {
+   "titulo": "en Google, en Maps y en la IA",
+   "bajada": "Juan, así encuentra hoy a la bicicletería alguien que busca un service en el barrio."
+  },
+  "encontramos": {
+   "bajada": "Juan, ustedes tienen la nota más alta de la búsqueda — y eso suma.",
+   "cifras": [
+    {
+     "valor": "4,7",
+     "texto": "la nota de Rueda Libre en Google, con 210 reseñas"
+    },
+    {
+     "valor": "1.º",
+     "texto": "puesto en Maps al buscar bicicletería en Barrio Ejemplo",
+     "alerta": true
+    },
+    {
+     "valor": "0",
+     "texto": "páginas propias",
+     "alerta": true
+    }
+   ],
+   "a_favor": [
+    "Tenés más reseñas que las otras bicicleterías de la búsqueda."
+   ],
+   "hoy_pasa": [
+    "Si alguien te busca por la IA, no te encuentra."
+   ],
+   "cita": {
+    "texto": "Excelente atención, me dejaron la bici como nueva.",
+    "autor": "Reseña en Google."
+   }
+  },
+  "google": {
+   "busqueda": "bicicletería en Barrio Ejemplo",
+   "fecha_busqueda": "2026-11-06",
+   "resultados": [
+    {
+     "nombre": "Bicis del Centro",
+     "nota": "4,8",
+     "resenas": 90
+    },
+    {
+     "nombre": "Bicicletería Rueda Libre",
+     "nota": "4,7",
+     "resenas": 210,
+     "yo": true
+    }
+   ]
+  },
+  "ia": {
+   "pregunta": "Recomendame una bicicletería en Barrio Ejemplo",
+   "recomienda": [
+    "Bicis del Centro"
+   ],
+   "ejemplo": {
+    "pregunta": "¿Dónde llevo mi bici?",
+    "respuesta": "Rueda Libre tiene nota 4,7; ustedes pueden escribirles por WhatsApp."
+   }
+  },
+  "presupuesto": {
+   "activo": false,
+   "valida_hasta": "2026-12-06",
+   "opciones": [
+    {
+     "ojo": "Opción A",
+     "titulo": "La página propia",
+     "items": [
+      {
+       "texto": "Página de hasta 6 secciones",
+       "monto": 280000,
+       "promo": true
+      },
+      {
+       "texto": "Dominio .com.ar a nombre de la bicicletería",
+       "monto": 10200
+      },
+      {
+       "texto": "Gestión del proyecto (10 %)",
+       "monto": 31000
+      }
+     ],
+     "total": 341200,
+     "cuotas": [
+      40,
+      30,
+      30
+     ]
+    },
+    {
+     "ojo": "Opción B",
+     "titulo": "La página y la ficha",
+     "recomendada": true,
+     "items": [
+      {
+       "texto": "Página de hasta 8 secciones",
+       "monto": 350000,
+       "promo": true
+      },
+      {
+       "texto": "Ficha de Google ordenada",
+       "monto": 55000
+      },
+      {
+       "texto": "Gestión del proyecto (10 %)",
+       "monto": 40500
+      }
+     ],
+     "total": 445500,
+     "cuotas": [
+      50,
+      30,
+      30
+     ],
+     "abono": {
+      "items": [
+       {
+        "texto": "SEO y GEO inicial, con informe a los 60 días",
+        "monto": 70000,
+        "antes": 140000
+       }
+      ],
+      "total": 70000,
+      "texto": "Más **$ 45.000 por mes**."
+     }
+    }
+   ],
+   "avanzar": "Respondé por WhatsApp con la opción que elegís."
+  },
+  "promo": {
+   "fecha": "cyber",
+   "nombre": "Cyber Week",
+   "porcentaje": 25,
+   "hasta": "2026-11-01",
+   "sobre": "la página"
+  },
+  "ia_recomienda": true
+ },
+ "fotos": {}
+}

@@ -1,0 +1,20 @@
+{
+ "_leeme": "Lista vigente de la línea web para revisar los presupuestos de los diagnósticos (revisar.py --perfil diagnostico). Fuente: 02 - Servicio Técnico/Tabla de Precios/Precios_Web_Septiembre_2026.html (rev. 5/9/2026). Se actualiza acá cada vez que cambia el tarifario. Cada patrón se busca en el texto del ítem, sin mayúsculas. Con 'base', el precio es base + (secciones - incluye) x por_extra. 'nivel' AVISO marca los precios que todavía no están confirmados en el tarifario.",
+ "vigente_desde": "2026-09-05",
+ "hora_control": 17500,
+ "gestion_porcentaje": 10,
+ "items": [
+  {"patron": "p[aá]gina[^,]*?hasta (\\d+) secciones", "base": 300000, "incluye": 6, "por_extra": 25000, "nombre": "Landing one-page (hasta 6 secciones) y sección adicional"},
+  {"patron": "sitio institucional", "precio": 450000, "nombre": "Sitio institucional (hasta 5)"},
+  {"patron": "p[aá]gina adicional", "precio": 60000, "nombre": "Página adicional (sitio institucional)"},
+  {"patron": "secci[oó]n adicional", "precio": 25000, "nombre": "Sección adicional one-page"},
+  {"patron": "seo y geo inicial|seo/geo inicial", "precio": 140000, "nombre": "SEO/GEO inicial + informe a 60 días"},
+  {"patron": "seo y geo sobre|seo/geo sobre", "precio": 155000, "nombre": "SEO/GEO sobre sitio existente"},
+  {"patron": "migraci[oó]n", "precio": 50000, "nombre": "Migración de dominio y hosting"},
+  {"patron": "traducci[oó]n", "precio": 210000, "nombre": "Traducción del sitio al inglés"},
+  {"patron": "actualizaci[oó]n de contenido", "precio": 35000, "nombre": "Actualización de contenido por vez (el 15/10 se decidió pasarla a $45.000, pendiente de aplicar)", "nivel": "AVISO"},
+  {"patron": "dominio", "precio": 10200, "nombre": "Registro .com.ar: arancel NIC ($8.500) + 20 %. Si cambió el arancel, actualizar acá", "nivel": "AVISO"},
+  {"patron": "ficha de google", "precio": 55000, "nombre": "Ficha de Google ordenada: precio usado en los diagnósticos de nov 2026, todavía no está en el tarifario de septiembre", "nivel": "AVISO"}
+ ],
+ "abonos": [35000, 55000]
+}

@@ -1,0 +1,198 @@
+{
+ "_leeme": "Caso inventado para probar armar.py, render.mjs y verificar.py. Las fotos salen de ejemplo/img (hacer_imagenes.py).",
+ "formato": "diagnostico/v2",
+ "prospecto": "ejemplo",
+ "slug": "ruedalibre",
+ "datos": {
+  "negocio": "Bicicletería Rueda Libre",
+  "corto": "Rueda Libre",
+  "zona": "Barrio Ejemplo",
+  "direccion": "Calle Falsa 123",
+  "rubro": "Bicicletería",
+  "fecha": "2026-11-06",
+  "codigo": "PCS-2026-11-EJE",
+  "acento": "#E4572E",
+  "trato": "vos",
+  "portada": {
+   "titulo": "en Google, en Maps y en la IA",
+   "bajada": "Juan, así encuentra hoy a la bicicletería alguien que busca un service en el barrio."
+  },
+  "encontramos": {
+   "bajada": "Juan, Rueda Libre es la que más reseñas tiene en la búsqueda y la IA todavía no la nombra.",
+   "cifras": [
+    {
+     "valor": "4,7",
+     "texto": "la nota de Rueda Libre en Google, con 210 reseñas"
+    },
+    {
+     "valor": "2.º",
+     "texto": "puesto en Maps al buscar bicicletería en Barrio Ejemplo",
+     "alerta": true
+    },
+    {
+     "valor": "0",
+     "texto": "páginas propias",
+     "alerta": true
+    },
+    {
+     "valor": "3",
+     "texto": "fotos del local en la ficha de Google",
+     "alerta": true
+    }
+   ],
+   "a_favor": [
+    "Tenés más reseñas que las otras bicicleterías de la búsqueda.",
+    "Los clientes destacan la atención y el trabajo en las reseñas."
+   ],
+   "hoy_pasa": [
+    "Si alguien te busca por la IA, no te encuentra.",
+    "La ficha no tiene botón de sitio web."
+   ],
+   "cita": {
+    "texto": "Excelente atención, me dejaron la bici como nueva.",
+    "autor": "Reseña en Google."
+   }
+  },
+  "google": {
+   "busqueda": "bicicletería en Barrio Ejemplo",
+   "fecha_busqueda": "2026-11-06",
+   "resultados": [
+    {
+     "nombre": "Bicis del Centro",
+     "nota": "4,8",
+     "resenas": 90
+    },
+    {
+     "nombre": "Bicicletería Rueda Libre",
+     "nota": "4,7",
+     "resenas": 210,
+     "yo": true
+    }
+   ],
+   "bajada": "Buscamos \"bicicletería en Barrio Ejemplo\" en Google Maps, como lo haría un cliente nuevo.",
+   "nota": "Resultados sin contar los anuncios.",
+   "ficha_texto": "**La ficha en Maps.** Sin descripción y sin botón de sitio web.",
+   "nombre": {
+    "titulo": "Buscando el nombre",
+    "texto": "\"rueda libre barrio ejemplo\" en Google: aparece la ficha."
+   }
+  },
+  "ia": {
+   "pregunta": "Recomendame una bicicletería en Barrio Ejemplo",
+   "recomienda": [
+    "Bicis del Centro"
+   ],
+   "ejemplo": {
+    "pregunta": "¿Dónde llevo mi bici?",
+    "respuesta": "Rueda Libre tiene nota 4,7; ustedes pueden escribirles por WhatsApp."
+   },
+   "bajada": "Cada vez más gente le pregunta a la IA dónde llevar su bici.",
+   "fuente": "ChatGPT, el 6 de noviembre de 2026, sin sesión iniciada.",
+   "texto": "ChatGPT recomienda otra bicicletería y no nombra a Rueda Libre."
+  },
+  "presupuesto": {
+   "activo": false,
+   "valida_hasta": "2026-12-06",
+   "opciones": [
+    {
+     "ojo": "Opción A",
+     "titulo": "La página propia",
+     "items": [
+      {
+       "texto": "Página de hasta 6 secciones",
+       "monto": 300000,
+       "promo": true
+      },
+      {
+       "texto": "Dominio .com.ar a nombre de la bicicletería",
+       "monto": 10200
+      },
+      {
+       "texto": "Gestión del proyecto (10 %)",
+       "monto": 31000
+      }
+     ],
+     "total": 341200,
+     "cuotas": [
+      40,
+      30,
+      30
+     ]
+    },
+    {
+     "ojo": "Opción B",
+     "titulo": "La página y la ficha",
+     "recomendada": true,
+     "items": [
+      {
+       "texto": "Página de hasta 8 secciones",
+       "monto": 350000,
+       "promo": true
+      },
+      {
+       "texto": "Ficha de Google ordenada",
+       "monto": 55000
+      },
+      {
+       "texto": "Gestión del proyecto (10 %)",
+       "monto": 40500
+      }
+     ],
+     "total": 445500,
+     "cuotas": [
+      40,
+      30,
+      30
+     ],
+     "abono": {
+      "items": [
+       {
+        "texto": "SEO y GEO inicial, con informe a los 60 días",
+        "monto": 70000,
+        "antes": 140000
+       }
+      ],
+      "total": 70000,
+      "texto": "Más **$ 55.000 por mes**, mínimo 3 meses."
+     }
+    }
+   ],
+   "avanzar": "Respondé por WhatsApp con la opción que elegís.",
+   "bajada": "Dos opciones, con los precios de la lista vigente.",
+   "forma_pago": "40 % al aprobar, 30 % al ver la primera versión y 30 % al publicar.",
+   "plazos": "Primera versión en 3 días desde que nos mandás el material.",
+   "necesitamos": "Un permiso en NIC Argentina para el dominio."
+  },
+  "promo": {
+   "fecha": "cyber",
+   "nombre": "Cyber Week",
+   "porcentaje": 25,
+   "hasta": "2026-11-15",
+   "sobre": "la página"
+  },
+  "ia_recomienda": false,
+  "vista": {
+   "bajada": "Un ejemplo armado con las fotos de la ficha.",
+   "secciones": [
+    [
+     "Inicio",
+     "Qué hacen y el botón de consulta."
+    ],
+    [
+     "Servicios",
+     "Service, repuestos y armado."
+    ]
+   ],
+   "nota": "**Lo que ya tenés alcanza para empezar.**"
+  }
+ },
+ "fotos": {
+  "portada": "img/negocio.jpg",
+  "portada_pos": "center 40%",
+  "galeria": [
+   "img/instalaciones.jpg",
+   "img/banda.jpg",
+   "img/textura.jpg"
+  ]
+ }
+}

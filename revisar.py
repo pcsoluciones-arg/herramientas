@@ -8,7 +8,7 @@ humano o agente está en el documento del proyecto claude/reglas-verificables.md
 Uso:
     python3 revisar.py [--perfil P] [--idioma I] [--json] RUTA [RUTA ...]
 
-    --perfil  texto (por defecto), sitio, panel, entrega o carpeta. Cada perfil suma
+    --perfil  texto (por defecto), sitio, panel, entrega, diagnostico o carpeta. Cada perfil suma
               reglas propias (ver PERFILES más abajo).
     --idioma  neutro, voseo o libre. Si no se indica, se toma de .reglas.json o queda libre.
     --url     URL del sitio publicado (perfil sitio): og:url, og:image y canonical tienen que ser de ese dominio.
@@ -519,7 +519,8 @@ def regla_pdf(ruta):
         if abs(ancho - 595.28) > 2 or abs(alto - 841.89) > 2:
             anotar("AVISO", ruta, 0, "pdf", "página de %.0f × %.0f pt (A4 es 595 × 842)" % (ancho, alto))
             break
-    if b"/FontFile" not in d and b"/Font" in d:
+    # Los PDF de Chromium (Skia, los de Playwright) guardan las tipografías comprimidas: ahí no se ve /FontFile.
+    if b"/FontFile" not in d and b"/Font" in d and b"Skia/PDF" not in d:
         anotar("AVISO", ruta, 0, "pdf", "las tipografías no parecen embebidas")
     # 5/11/2026: el visor de PDF de la app de Claude tiñó de rosa la portada de un diagnóstico por un degradado con
     # transparencia. Un /SMask es una máscara de transparencia (degradados con alfa, sombras con desenfoque).
@@ -540,6 +541,176 @@ def regla_carpeta_raiz(raiz):
                 anotar("FALLA", os.path.join(actual, c), 0, "carpeta", "hay una _BORRAR fuera de la raíz: va una sola, en la raíz")
             if c in ("node_modules", "dist", ".wrangler") or c.startswith("_tmp"):
                 anotar("AVISO", os.path.join(actual, c), 0, "carpeta", "build o temporal dentro de OneDrive: va en ~/Trabajo-local")
+
+
+# ---------------------------------------------------------------- diagnósticos con presupuesto
+
+# Formas de "ustedes" que no se confunden con otra cosa. Van en FALLA si el diagnóstico es de vos.
+USTEDES = """ustedes respondan escaneen elijan manden avísennos escríbannos cuéntennos consulten
+pregunten reserven""".split()
+
+# Partes del diagnóstico que no siguen el trato: citas textuales, lo que pregunta un usuario a la IA,
+# lo que responde la IA, el chat de ejemplo y las búsquedas.
+DIAG_SIN_TRATO = ("datos.encontramos.cita", "datos.google.resultados", "datos.ia.pregunta", "datos.ia.recomienda",
+                  "datos.ia.segunda.cita", "datos.ia.segunda.pregunta", "datos.ia.ejemplo", "datos.plan.flujo.chat",
+                  "datos.plan.busquedas", "datos.promo")
+
+TARIFARIO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "diagnosticos", "tarifario.json")
+
+
+def textos_json(o, camino):
+    """Devuelve (camino, texto) de cada cadena de un JSON."""
+    if isinstance(o, str):
+        yield camino, o
+    elif isinstance(o, dict):
+        for k, v in o.items():
+            yield from textos_json(v, camino + "." + k)
+    elif isinstance(o, list):
+        for i, v in enumerate(o):
+            yield from textos_json(v, "%s[%d]" % (camino, i))
+
+
+def numero(s):
+    """'4,5' -> 4.5, '1.º' -> 1, 384 -> 384."""
+    if isinstance(s, (int, float)):
+        return s
+    m = re.search(r"\d+(?:[.,]\d+)?", str(s).replace(".º", ""))
+    return float(m.group().replace(",", ".")) if m else None
+
+
+def precio_de_lista(texto, tarifa):
+    """Precio de lista de un ítem según el tarifario, o None si el ítem no está."""
+    for regla in tarifa["items"]:
+        m = re.search(regla["patron"], texto, re.I)
+        if not m:
+            continue
+        if "base" in regla:
+            n = int(m.group(1))
+            return regla["base"] + max(0, n - regla["incluye"]) * regla["por_extra"], regla
+        return regla.get("precio"), regla
+    return None, None
+
+
+def regla_diagnostico(ruta, d):
+    datos = d.get("datos") or {}
+    # textos: guiones, títulos y trato parejo
+    vos = datos.get("trato") == "vos"
+    lista = TUTEO + USTEDES if vos else VOSEO
+    patron = re.compile(r"(?<![\w-])(" + "|".join(map(re.escape, lista)) + r")(?![\w-])", re.I)
+    for camino, t in textos_json(datos, "datos"):
+        if "—" in t or "–" in t:
+            anotar("FALLA", ruta, 0, "guiones", "%s: guion largo o semilargo" % camino)
+        if camino.endswith(".titulo") and INVERSION.search(t):
+            anotar("FALLA", ruta, 0, "titulos", "%s: título del tipo «no es X: es Y»" % camino)
+        if MARCADORES.search(t):
+            anotar("FALLA", ruta, 0, "marcadores", "%s: marcador sin reemplazar" % camino)
+        if camino.startswith(DIAG_SIN_TRATO):
+            continue
+        m = patron.search(nfc(t))
+        if m:
+            anotar("FALLA", ruta, 0, "trato", "%s: «%s» en un diagnóstico %s" % (camino, m.group(), "de vos" if vos else "de ustedes"))
+
+    # cifras contra la búsqueda de Maps
+    G = datos.get("google") or {}
+    res = G.get("resultados") or []
+    yo = [i for i, r in enumerate(res) if r.get("yo")]
+    if len(yo) != 1:
+        anotar("FALLA", ruta, 0, "cifras", "google.resultados tiene que marcar un solo resultado con yo (hay %d)" % len(yo))
+    else:
+        i = yo[0]
+        r = res[i]
+        otros = [x for k, x in enumerate(res) if k != i]
+        for c in (datos.get("encontramos") or {}).get("cifras") or []:
+            txt, val = c.get("texto", ""), numero(c.get("valor"))
+            if re.search(r"(?i)puesto en (google )?maps", txt) and val != i + 1:
+                anotar("FALLA", ruta, 0, "cifras", "la cifra dice puesto %s en Maps y en google.resultados está en el %d" % (c.get("valor"), i + 1))
+            if re.search(r"(?i)\bla nota\b", txt) and numero(r.get("nota")) is not None and val != numero(r.get("nota")):
+                anotar("FALLA", ruta, 0, "cifras", "la cifra dice nota %s y en google.resultados es %s" % (c.get("valor"), r.get("nota")))
+            m = re.search(r"(?i)con ([\d.]+) reseñas", txt)
+            if m and int(m.group(1).replace(".", "")) != r.get("resenas"):
+                anotar("FALLA", ruta, 0, "cifras", "la cifra dice %s reseñas y en google.resultados son %s" % (m.group(1), r.get("resenas")))
+        # frases condicionales: solo si son verdad
+        todo = " ".join(t for c, t in textos_json(datos, "datos") if not c.startswith(DIAG_SIN_TRATO))
+        if re.search(r"(?i)más reseñas", todo) and otros and r.get("resenas", 0) <= max(x.get("resenas", 0) for x in otros):
+            anotar("FALLA", ruta, 0, "condicional", "dice «más reseñas» y otro resultado de la búsqueda tiene tantas o más")
+        if re.search(r"(?i)(la )?nota más alta", todo) and otros and numero(r.get("nota")) < max(numero(x.get("nota")) or 0 for x in otros):
+            anotar("FALLA", ruta, 0, "condicional", "dice «nota más alta» y otro resultado de la búsqueda la tiene más alta")
+        if re.search(r"(?i)(primer[oa]?|1\.º) (lugar|puesto) en (google )?maps", todo) and i != 0:
+            anotar("FALLA", ruta, 0, "condicional", "dice primer puesto en Maps y está en el %d" % (i + 1))
+
+    # la IA: ia_recomienda tiene que coincidir con la lista de recomendados
+    ia = datos.get("ia") or {}
+    nombres = [n.lower() for n in (datos.get("corto"), datos.get("negocio")) if n]
+    nombrado = any(any(n in x.lower() or x.lower() in n for n in nombres) for x in ia.get("recomienda") or [])
+    if ia.get("recomienda") is not None and bool(datos.get("ia_recomienda")) != nombrado:
+        anotar("FALLA", ruta, 0, "cifras", "ia_recomienda es %s y la lista de ia.recomienda %s al negocio" % (bool(datos.get("ia_recomienda")), "nombra" if nombrado else "no nombra"))
+
+    # presupuesto: sumas, gestión, cuotas y precios de lista
+    try:
+        with open(TARIFARIO, encoding="utf8") as f:
+            tarifa = json.load(f)
+    except OSError:
+        tarifa = None
+        anotar("AVISO", ruta, 0, "precios", "no se encontró diagnosticos/tarifario.json: los precios no se revisan")
+    P = datos.get("presupuesto") or {}
+    for k, op in enumerate(P.get("opciones") or []):
+        nombre = op.get("ojo") or "opción %d" % (k + 1)
+        for grupo, items, total in (("", op.get("items") or [], op.get("total")), (" (abono)", (op.get("abono") or {}).get("items") or [], (op.get("abono") or {}).get("total"))):
+            if not items:
+                continue
+            suma = sum(int(x.get("monto") or 0) for x in items)
+            if total is not None and int(total) != suma:
+                anotar("FALLA", ruta, 0, "sumas", "%s%s: el total es %s y la suma de los ítems da %s" % (nombre, grupo, total, suma))
+            gest = [x for x in items if re.search(r"(?i)gesti[oó]n del proyecto", x.get("texto", ""))]
+            if gest and int(gest[0].get("monto") or 0) > 0:
+                sub = sum(int(x.get("antes") or x.get("monto") or 0) for x in items if x is not gest[0])
+                if abs(int(gest[0]["monto"]) - sub * 0.10) > 500:
+                    anotar("FALLA", ruta, 0, "sumas", "%s: la gestión es %s y el 10 %% del subtotal de lista (%s) da %s" % (nombre, gest[0]["monto"], sub, round(sub * 0.10)))
+            if tarifa:
+                for x in items:
+                    if x in gest or not int(x.get("monto") or 0) and not x.get("antes"):
+                        continue
+                    lista, regla = precio_de_lista(x.get("texto", ""), tarifa)
+                    real = int(x.get("antes") or x.get("monto") or 0)
+                    if regla is None:
+                        anotar("AVISO", ruta, 0, "precios", "%s: «%s» no está en el tarifario, confirmar el precio" % (nombre, x.get("texto", "")))
+                    elif lista is not None and real != lista:
+                        nivel = regla.get("nivel", "FALLA")
+                        anotar(nivel, ruta, 0, "precios", "%s: «%s» a %s; la lista dice %s" % (nombre, x.get("texto", ""), real, lista))
+        cuotas = op.get("cuotas")
+        if cuotas and sum(cuotas) != 100:
+            anotar("FALLA", ruta, 0, "sumas", "%s: las cuotas suman %d %%" % (nombre, sum(cuotas)))
+        abono = (op.get("abono") or {}).get("texto", "")
+        if tarifa and abono:
+            for m in re.finditer(r"\$\s?([\d.]+)\s*(?:\*\*)?\s*por mes", abono):
+                if int(m.group(1).replace(".", "")) not in tarifa.get("abonos", []):
+                    anotar("FALLA", ruta, 0, "precios", "%s: abono de $%s por mes; los abonos de la lista son %s" % (nombre, m.group(1), tarifa.get("abonos")))
+
+    # oferta vigente el día del armado
+    pr = datos.get("promo") or {}
+    if pr.get("hasta") and datos.get("fecha") and pr["hasta"] < datos["fecha"]:
+        anotar("FALLA", ruta, 0, "oferta", "la oferta vence el %s, antes de la fecha del diagnóstico (%s)" % (pr["hasta"], datos["fecha"]))
+    if pr and not any(x.get("promo") for op in P.get("opciones") or [] for x in op.get("items") or []):
+        anotar("AVISO", ruta, 0, "oferta", "hay oferta y ningún ítem lleva promo: true")
+
+    # fotos de menos de 1 MB
+    fotos = dict(d.get("fotos") or {})
+    if d.get("captura"):
+        fotos["captura"] = d["captura"]
+    for k, v in fotos.items():
+        for j, u in enumerate(v if isinstance(v, list) else [v]):
+            if isinstance(u, str) and u.startswith("data:") and len(u) * 3 / 4 > 1_000_000:
+                anotar("FALLA", ruta, 0, "fotos", "fotos.%s%s pesa más de 1 MB" % (k, "[%d]" % j if isinstance(v, list) else ""))
+
+
+def regla_pdf_sin_transparencias(ruta):
+    try:
+        with open(ruta, "rb") as f:
+            d = f.read()
+    except OSError:
+        return
+    if b"/SMask" in d:
+        anotar("FALLA", ruta, 0, "pdf", "el PDF tiene transparencias (/SMask): el visor de la app de Claude las tiñe de rosa")
 
 
 # ---------------------------------------------------------------- recorrido
@@ -591,6 +762,8 @@ def revisar(ruta, perfil, idioma, preview, url_sitio=None, raiz=None):
     if ext == ".docx":
         return regla_docx(ruta)
     if ext == ".pdf":
+        if perfil == "diagnostico":
+            regla_pdf_sin_transparencias(ruta)
         return regla_pdf(ruta)
     if ext in EXT_IMAGEN and ext != ".svg":
         return regla_c2pa(ruta)
@@ -604,6 +777,14 @@ def revisar(ruta, perfil, idioma, preview, url_sitio=None, raiz=None):
             anotar("AVISO", ruta, 0, "lectura", "no se pudo leer: el archivo está solo en la nube de OneDrive")
         return
     regla_secretos(ruta, texto)
+    if perfil == "diagnostico" and ext == ".json":
+        try:
+            d = json.loads(texto)
+        except ValueError:
+            return anotar("FALLA", ruta, 0, "json", "el JSON no se puede leer")
+        if isinstance(d, dict) and str(d.get("formato", "")).startswith("diagnostico/"):
+            return regla_diagnostico(ruta, d)
+        return
     if ext in EXT_CODIGO:
         if perfil == "panel" and ext in (".css",):
             regla_css(ruta, texto)
@@ -636,7 +817,7 @@ def revisar(ruta, perfil, idioma, preview, url_sitio=None, raiz=None):
 def main():
     ap = argparse.ArgumentParser(description="Revisor de reglas de PC Soluciones (solo lee).")
     ap.add_argument("rutas", nargs="+")
-    ap.add_argument("--perfil", choices=["texto", "sitio", "panel", "entrega", "carpeta"])
+    ap.add_argument("--perfil", choices=["texto", "sitio", "panel", "entrega", "diagnostico", "carpeta"])
     ap.add_argument("--idioma", choices=["neutro", "voseo", "libre"])
     ap.add_argument("--preview", action="store_true", help="la página es una preview (tiene que llevar noindex)")
     ap.add_argument("--url", help="URL del sitio publicado (perfil sitio). Si no se indica, se toma de .reglas.json o del canonical")
