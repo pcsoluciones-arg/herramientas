@@ -13,6 +13,7 @@ python3 revisar.py --perfil sitio --idioma voseo dist/        # un sitio armado
 python3 revisar.py --perfil sitio --preview --idioma neutro preview/
 python3 revisar.py --idioma neutro informe.md propuesta.docx  # un entregable
 python3 revisar.py --perfil carpeta "~/mnt/PC Soluciones"      # orden de la raíz
+python3 revisar.py --perfil diagnostico diagnostico-ruedalibre.json diagnostico-ruedalibre.pdf
 python3 revisar.py .                                           # toma la configuración de .reglas.json
 ```
 
@@ -23,6 +24,7 @@ Perfiles:
 | `texto` (por defecto) | Documentos, propuestas, informes | Guiones, idioma, títulos, marcadores, claves; zip, docx, pdf e imágenes si los hay |
 | `sitio` | La carpeta armada de un sitio (lo que se publica) | Lo anterior, más Open Graph (absoluto y del dominio del sitio), indexación, sitemap, robots y llms.txt, área segura, elementos fijos con mezcla o desenfoque, WhatsApp, copy público, firma del pie, schema (FAQ y LocalBusiness) y avisos de cabecera, imágenes y plazos de armado |
 | `panel` | El repositorio del panel | Lo de `texto`, más la escala de radios y de letra del CSS |
+| `diagnostico` | El diagnóstico con presupuesto de un prospecto (`diagnostico/v2`) y su PDF | Guiones, marcadores y trato parejo según `datos.trato`; cifras contra la búsqueda de Maps; frases condicionales ("más reseñas", "nota más alta", "primer puesto"); `ia_recomienda`; sumas, gestión del 10 %, cuotas y precios contra `diagnosticos/tarifario.json`; abonos; oferta vencida; fotos de más de 1 MB; PDF con transparencias |
 | `carpeta` | La raíz de PC Soluciones en OneDrive | Solo nombres: qué hay en la raíz, `_BORRAR` de más, builds dentro de OneDrive |
 
 En los `.md`, lo que va entre comillas invertidas (código o un ejemplo citado) no se revisa.
@@ -53,9 +55,13 @@ python3 sitios/navegador.py dist/ --capturas /tmp/capturas
 python3 sitios/instalar.py --verificar ../sitio-plomerodebarrio
 ```
 
+## diagnosticos/: fábrica de diagnósticos
+
+Las herramientas con las que se arma el diagnóstico con presupuesto de un prospecto: transcribir los audios del chat, pasar fotos a data URL, la grilla de portadas, la página de ejemplo para el mockup (`molde_landing.py`), el mockup, el armado del JSON, la página con el molde del panel, la verificación en el celular y en A4, el registro de cada corrida y el tarifario que usa `revisar.py`. Detalle en `diagnosticos/LEEME.md`. Las sigue la skill `fabrica-diagnosticos` de la cuenta de Manu.
+
 ## skills/: revisores de la Fábrica de presencia
 
-Los cuatro revisores de los sitios y las piezas (idioma y estilo, técnica, SEO y GEO, visual), escritos como skills. Cada uno recibe el informe de los controles de código y devuelve un JSON con su veredicto. Detalle en `skills/LEEME.md`.
+Los cuatro revisores de los sitios y las piezas (idioma y estilo, técnica, SEO y GEO, visual) y el revisor de datos de los diagnósticos, escritos como skills. Cada uno recibe el informe de los controles de código y devuelve un JSON con su veredicto. Detalle en `skills/LEEME.md`.
 
 ## repertorio/: copia del Repertorio de estilo
 

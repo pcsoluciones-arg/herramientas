@@ -8,6 +8,7 @@ Las cuatro skills de los revisores de la etapa 2 de PCS Central (doc del proyect
 | `revisor-tecnica/` | Técnica | Haiku 5.5 | Sitio |
 | `revisor-seo-geo/` | SEO y GEO | Sonnet 5.5 | Sitio |
 | `revisor-visual/` | Visual | Sonnet 5.5 con visión | Sitio y piezas |
+| `revisor-diagnostico/` | Datos del diagnóstico | Sonnet 5.5 con visión | Diagnósticos con presupuesto (fábrica de diagnósticos, ver `diagnosticos/LEEME.md`) |
 
 El original de cada skill vive acá. En la cuenta de Manu hay una versión corta que lee esta (decisión 4 del plan).
 

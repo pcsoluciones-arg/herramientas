@@ -1,0 +1,36 @@
+{
+ "_leeme": "Negocio inventado para probar molde_landing.py. Las imágenes las genera hacer_imagenes.py. Cada negocio real tiene su marca.json en OneDrive, en Diagnósticos/<slug>/, nunca en este repositorio.",
+ "nombre": "Bicicletería Rueda Libre",
+ "logo": "img/logo-negativo.png",
+ "whatsapp_svg": "",
+ "fotos": {
+  "negocio": {"ruta": "img/negocio.jpg", "pos": "70% 50%"},
+  "textura": {"ruta": "img/textura.jpg"},
+  "instalaciones": {"ruta": "img/instalaciones.jpg", "pos": "center 40%"},
+  "banda": {"ruta": "img/banda.jpg", "pos": "center 62%"}
+ },
+ "colores": {
+  "principal": "#C44A30", "oscuro": "#2A1A14", "boton": "#E4572E", "detalle": "#F2C14E",
+  "ola1": "#F2C14E", "ola2": "#C44A30", "blanco": "#F6F1E9", "tilde": "#3E8E5E"
+ },
+ "tipografias": {
+  "titulo": {"familia": "Saira", "archivo": "", "estilo": "italic", "peso": 800, "ancho": "125%"},
+  "texto": {"familia": "Barlow", "archivos": {}}
+ },
+ "textos": {
+  "menu": ["Inicio", "Servicios", "El taller", "Ubicación", "Contacto"],
+  "boton": "Consultá por tu bici",
+  "titulo": "Service de bicicletas en Barrio Ejemplo",
+  "bajada": "Service completo, repuestos y armado de bicis, con turno en el día.",
+  "secundario": "Ver el taller",
+  "estrellas": "4,7 en Google · 210 reseñas",
+  "recuadros": [
+   {"icono": "herramienta", "titulo": "Service completo", "texto": "Frenos, cambios y ruedas en orden."},
+   {"icono": "reloj", "titulo": "Turno en el día", "texto": "De lunes a sábado, de 9 a 19."},
+   {"icono": "estrella", "titulo": "Repuestos", "texto": "Las marcas de siempre, en el local."}
+  ],
+  "instalaciones": {"titulo": "Nuestro taller", "bajada": "Un taller ordenado, a la calle, para que veas cómo trabajamos.",
+   "lista": ["Taller a la vista", "Repuestos en el local", "Armado de bicis nuevas", "Atención personalizada"]},
+  "banda": {"titulo": "Estamos en el barrio", "texto": "Calle Falsa 123, Barrio Ejemplo. De lunes a sábado, de 9 a 19."}
+ }
+}
