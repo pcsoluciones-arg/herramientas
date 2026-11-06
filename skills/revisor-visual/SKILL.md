@@ -35,6 +35,17 @@ Revisas cómo se ve un sitio de un cliente de PC Soluciones, o una pieza para re
 
 Las capturas salen de Chromium: lo propio del iPhone (barras, rebote, área segura) es del revisor técnico.
 
+## En los diagnósticos con presupuesto (formato diagnostico/v2)
+
+Aprendido con Ruth y Amor de Perros el 5/11/2026. Mira la página a 390 y 1360 px y el PDF que sale del botón PDF.
+
+1. **Cada hoja del PDF llena la página con espacios parejos.** El espacio que sobra se reparte en partes iguales entre los bloques; ningún bloque va empujado al pie dejando un hueco en el medio. Bloquea una hoja con más de un tercio vacío o con huecos desparejos.
+2. **Columnas desparejas:** si en una hoja de dos columnas una queda mucho más corta, el bloque suelto va como recuadro a lo ancho, debajo de las dos.
+3. **El acento de la marca se lee sobre su fondo.** Un color oscuro del negocio sobre la portada oscura no se lee (pasó con el verde de Ruth): pide un acento claro de su marca (por ejemplo, el dorado del logo).
+4. **Ofertas por fecha especial:** el precio de lista va tachado al lado del precio con la oferta, también en el total; el sello de la portada no tapa la marca de PC Soluciones ni el título.
+5. **El PDF se ve igual en cualquier visor:** la portada sin tinte (rosa o gris) en el visor de la app de Claude y en Vista Previa. Si `revisar.py` avisa "tiene transparencias", bloquea.
+6. **Una sola vez cada cosa:** el QR y el cierre aparecen en un solo lugar.
+
 ## Qué no haces
 
 No opinas de textos ni de SEO. No propones rediseños: cada observación es un cambio concreto sobre lo que hay. Los gustos personales que no están en el Repertorio ni en esta lista son sugerencia.

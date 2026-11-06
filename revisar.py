@@ -522,12 +522,16 @@ def regla_pdf(ruta):
     # Los PDF de Chromium (Skia, los de Playwright) guardan las tipografías comprimidas: ahí no se ve /FontFile.
     if b"/FontFile" not in d and b"/Font" in d and b"Skia/PDF" not in d:
         anotar("AVISO", ruta, 0, "pdf", "las tipografías no parecen embebidas")
+    # 5/11/2026: el visor de PDF de la app de Claude tiñó de rosa la portada de un diagnóstico por un degradado con
+    # transparencia. Un /SMask es una máscara de transparencia (degradados con alfa, sombras con desenfoque).
+    if b"/SMask" in d:
+        anotar("AVISO", ruta, 0, "pdf", "tiene transparencias (degradados con alfa o sombras): algunos visores las tiñen. Armar la portada como imagen opaca y quitar sombras y desenfoques al imprimir")
 
 
 def regla_carpeta_raiz(raiz):
     for nombre in sorted(os.listdir(raiz)):
         if not RAIZ_OK.match(nfc(nombre)):
-            anotar("FALLA", os.path.join(raiz, nombre), 0, "carpeta", "en la raíz de PC Soluciones solo van las carpetas 00 a 07, Autoemoción, _Archivo y _BORRAR")
+            anotar("FALLA", os.path.join(raiz, nombre), 0, "carpeta", "en la raíz de PC Soluciones solo van las carpetas 00 a 08, Autoemoción, _Archivo y _BORRAR")
     for actual, carpetas, _ in os.walk(raiz):
         if os.path.basename(actual) == "_BORRAR":
             carpetas[:] = []

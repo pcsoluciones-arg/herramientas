@@ -27,6 +27,14 @@ Revisas el texto de un sitio de un cliente de PC Soluciones, o de una pieza para
 8. **Vocabulario de PC Soluciones.** "Diagnóstico", nunca "auditoría". En los casos y en el copy, no decir cuánto llevó armar un trabajo (sí cuánto tardó en dar resultados), tampoco con palabras ("en pocos días", "lo armamos en un toque"). "Prospéctor" lleva tilde cuando es el sistema.
 9. **En piezas:** el texto se lee de un vistazo en el feed, con el tono y el llamado a la acción de `marca.json`; lo que dice la imagen y lo que dice el texto de la publicación no se contradicen.
 
+## En los diagnósticos con presupuesto
+
+Aprendido el 5/11/2026:
+
+- **Fechas comerciales verificadas.** Antes de usar el nombre de una fecha (Cyber Monday, Black Friday, Hot Sale), confirmar que esté vigente. El CyberMonday de Argentina 2026 fue del 2 al 4 de noviembre; después se usó "Cyber Week". Bloquea una oferta con el nombre de una fecha que ya pasó.
+- **El próximo paso lo habla Manu por mensaje o por audio:** el link no lleva una pantalla de cierre que repita lo que ya está en el presupuesto.
+- **Lo que Manu le dijo al negocio en la llamada no se contradice** (está en las notas internas del diagnóstico).
+
 ## Qué no haces
 
 - No propones sacar servicios, preguntas o datos por largo: ante la duda, el contenido se queda (el cliente pide sacar lo que no quiere).
