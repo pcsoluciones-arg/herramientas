@@ -83,7 +83,9 @@ def numero_pr():
 
 def revision_ok(sha):
     runs = api(f"commits/{sha}/check-runs?per_page=100")["check_runs"]
-    r = [c for c in runs if c["name"] == CHECK_REVISION]
+    # El trabajo "controles" de Publicar también aparece en el commit del PR, en "skipped" (solo corre en un push a
+    # main). No es la revisión: si se lo tomara por ser el más nuevo, la etiqueta "listo" nunca publicaría.
+    r = [c for c in runs if c["name"] == CHECK_REVISION and c.get("conclusion") != "skipped"]
     if not r:
         return None
     return max(r, key=lambda c: c["id"])["conclusion"]

@@ -18,7 +18,7 @@ Esta carpeta es una copia de `pcsoluciones-arg/herramientas/sitios/`, hecha por 
 
 ## Riesgo
 
-Lo decide `riesgo_sitio.py`. Sale solo: fotos nuevas en `fotos/` y `ficha-google/`, lo que carga el panel en las secciones de `secciones.json`, textos en campos que ya existen de `contenido.json` y documentación. Todo sin datos de contacto ni precios, sin retirar más fotos de las que entran y en menos de 300 líneas. Lo demás espera a Manu.
+Lo decide `riesgo_sitio.py`. Sale solo: fotos nuevas en `fotos/` y `ficha-google/`, lo que carga el panel en las secciones de `secciones.json`, textos en campos que ya existen de `contenido.json` y documentación. Todo sin datos de contacto ni precios, sin retirar más fotos de las que entran y en menos de 300 líneas. Lo demás espera a Manu. En un sitio en vista previa (`"preview": true` en `.reglas.json`), todo sale solo salvo `.reglas.json`, `wrangler.toml`, `CLAUDE.md`, `.github/` y `fabrica/`.
 
 ## Controles
 

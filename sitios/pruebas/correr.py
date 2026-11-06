@@ -105,14 +105,14 @@ BASE = {"build.py": "print(1)\n", "wrangler.toml": 'name = "prueba"\n', "seccion
         "publico/favicon.png": "P"}
 
 
-def repo_juguete(cambios):
-    """Arma un repositorio con BASE y aplica cambios {ruta: contenido | None}. Devuelve (dir, base, head)."""
+def repo_juguete(cambios, base_extra=None):
+    """Arma un repositorio con BASE (más base_extra) y aplica cambios {ruta: contenido | None}. Devuelve (dir, base, head)."""
     tmp = tempfile.mkdtemp()
     g = lambda *a: subprocess.run(["git", "-C", tmp, *a], capture_output=True, text=True, check=True).stdout.strip()
     g("init", "-q")
     g("config", "user.email", "t@t")
     g("config", "user.name", "t")
-    for ruta, txt in BASE.items():
+    for ruta, txt in {**BASE, **(base_extra or {})}.items():
         f = pathlib.Path(tmp, ruta)
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(txt)
@@ -131,8 +131,8 @@ def repo_juguete(cambios):
     return tmp, base, g("rev-parse", "HEAD")
 
 
-def riesgo_de(cambios):
-    tmp, base, head = repo_juguete(cambios)
+def riesgo_de(cambios, base_extra=None):
+    tmp, base, head = repo_juguete(cambios, base_extra)
     cwd = os.getcwd()
     os.chdir(tmp)
     try:
@@ -152,8 +152,8 @@ def contenido(**cambios):
 NUEVO = {"id": "termo", "titulo": "Termotanque nuevo", "bajada": "Instalación completa.", "fotos": [{"archivo": "termo", "rol": "unica"}]}
 
 
-def esperar(nombre, cambios, nivel):
-    r = riesgo_de(cambios)
+def esperar(nombre, cambios, nivel, base_extra=None):
+    r = riesgo_de(cambios, base_extra)
     caso(f"{nombre}: {nivel}", r["riesgo"] == nivel, "; ".join(r["motivos"]) or "sin motivos")
 
 
@@ -184,6 +184,18 @@ esperar("borrar una foto", {"fotos/bacha.webp": None}, "alto")
 esperar("un HTML dentro de fotos/", {"fotos/pagina.html": "<h1>x</h1>"}, "alto")
 esperar("una subcarpeta en fotos/", {"fotos/a/b.webp": "W"}, "alto")
 esperar("más de 300 líneas", {"LEEME.md": "hola\n" * 400}, "alto")
+
+# Vista previa: .reglas.json de la base con "preview": true
+VP = {".reglas.json": json.dumps({"perfil": "sitio", "preview": True})}
+for ruta in ("build.py", "estilos.css", "publico/img/techo.webp", "marca.json", "secciones.json", "herramientas/og.py"):
+    esperar(f"vista previa, tocar {ruta}", {ruta: "x\n"}, "bajo", VP)
+esperar("vista previa, precio en un texto", {"contenido.json": contenido(a=lambda c: c["servicios"][0].update(bajada="Desde $10.000."))}, "bajo", VP)
+esperar("vista previa, más de 300 líneas", {"LEEME.md": "hola\n" * 400}, "bajo", VP)
+esperar("vista previa, borrar una foto", {"fotos/bacha.webp": None}, "bajo", VP)
+for ruta in (".reglas.json", "wrangler.toml", "CLAUDE.md", ".github/workflows/publicar.yml", "fabrica/sello.py"):
+    esperar(f"vista previa, tocar {ruta}", {ruta: "x\n"}, "alto", VP)
+esperar("ponerse en vista previa en el mismo cambio", {".reglas.json": json.dumps({"preview": True}), "build.py": "x\n"}, "alto")
+esperar("vista previa con preview en texto", {"build.py": "x\n"}, "alto", {".reglas.json": json.dumps({"preview": "true"})})
 
 # ---------------------------------------------------------------- instalar.py
 
@@ -302,6 +314,24 @@ def recorrido(evento, cambios, con_produccion=True, pr=None):
     shutil.rmtree(raiz, ignore_errors=True)
     return llamadas, (prod.stdout if prod.returncode == 0 else None), arbol_main, arbol_prod, salida
 
+
+def revision_con(checks):
+    viejo = publicar_sitio.api
+    publicar_sitio.api = lambda ruta, metodo="GET", datos=None: {"check_runs": checks}
+    try:
+        return publicar_sitio.revision_ok("abc")
+    finally:
+        publicar_sitio.api = viejo
+
+
+caso("revisión: el controles en skipped de Publicar no tapa el success de Revisión",
+     revision_con([{"id": 1, "name": "controles", "conclusion": "success"},
+                   {"id": 2, "name": "controles", "conclusion": "skipped"}]) == "success")
+caso("revisión: un controles nuevo en failure manda",
+     revision_con([{"id": 1, "name": "controles", "conclusion": "success"},
+                   {"id": 3, "name": "controles", "conclusion": "failure"}]) == "failure")
+caso("revisión: sin controles válido devuelve None",
+     revision_con([{"id": 2, "name": "controles", "conclusion": "skipped"}]) is None)
 
 FOTO = {"fotos/termo.webp": "W", "contenido.json": contenido(a=lambda c: c["trabajos"].insert(0, NUEVO))}
 ll, msj, am, ap, sal = recorrido("push", FOTO)
