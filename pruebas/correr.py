@@ -53,6 +53,32 @@ with tempfile.TemporaryDirectory() as d:
     errores += not ok
     print(("ok   " if ok else "MAL  ") + "plazos: el sitio propio no avisa")
 
+# Filtro de riesgo del propio repositorio (fabrica/riesgo.py)
+sys.path.insert(0, os.path.join(AQUI, "..", "fabrica"))
+from riesgo import clasificar  # noqa: E402
+CASOS_RIESGO = [
+    (["LEEME.md", "diagnosticos/LEEME.md"], "", "bajo"),
+    (["pruebas/casos/nuevo.md", "diagnosticos/ejemplo/caso-ejemplo.json"], "", "bajo"),
+    (["diagnosticos/tarifario.json"], "Manu confirmó el 6/11/2026 los dos precios.", "bajo"),
+    (["diagnosticos/tarifario.json"], "Ajuste de precios.", "alto"),
+    (["revisar.py"], "", "alto"),
+    (["sitios/publicar_sitio.py"], "", "alto"),
+    (["skills/revisor-idioma/SKILL.md"], "", "alto"),
+    (["diagnosticos/render.mjs"], "", "alto"),
+    ([".github/workflows/revision.yml"], "", "alto"),
+    (["fabrica/riesgo.py"], "", "alto"),
+    (["CLAUDE.md"], "", "alto"),
+    (["otro/archivo.py"], "", "alto"),
+]
+for archivos, cuerpo, esperado in CASOS_RIESGO:
+    hallado, _ = clasificar(archivos, cuerpo)
+    ok = hallado == esperado
+    errores += not ok
+    print(("ok   " if ok else "MAL  ") + "riesgo %s: %s" % (esperado, ", ".join(archivos)))
+ok = clasificar(["LEEME.md"], "", 400)[0] == "alto"
+errores += not ok
+print(("ok   " if ok else "MAL  ") + "riesgo alto: más de 300 líneas")
+
 # PDF del diagnóstico con transparencias (/SMask)
 with tempfile.TemporaryDirectory() as d:
     pdf = os.path.join(d, "diagnostico.pdf")

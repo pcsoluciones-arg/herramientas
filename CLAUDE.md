@@ -8,4 +8,5 @@ Leer `LEEME.md`. Índice general de PC Soluciones: documento del proyecto `claud
 - Cada regla nueva entra con su caso de prueba en `pruebas/` y `python3 pruebas/correr.py` tiene que pasar.
 - Sin bibliotecas externas: tiene que correr en la Mac, en la PC con Windows y en la nube tal cual. La excepción es `sitios/navegador.py`, que necesita Playwright.
 - `sitios/` es la Fábrica de presencia (ver `sitios/LEEME.md`). Lo que `sitios/instalar.py` copia a los sitios no se edita en los sitios: se cambia acá y se vuelve a instalar.
+- Todo cambio entra por un PR contra `main`. El filtro de riesgo (`fabrica/riesgo.py`) decide si se junta solo o espera a Manu (ver `LEEME.md`, "Cómo entra un cambio"). Nunca juntes a mano un PR propio.
 - Documentación en español neutro con tuteo, sin guiones largos. Commits firmados como Manuel Tonnelier (pcsolucionesbelgrano@gmail.com).

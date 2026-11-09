@@ -55,6 +55,15 @@ python3 sitios/navegador.py dist/ --capturas /tmp/capturas
 python3 sitios/instalar.py --verificar ../sitio-plomerodebarrio
 ```
 
+## Cómo entra un cambio a este repositorio
+
+Todo cambio entra por un pedido de cambio (PR) contra `main`. En cada PR, `.github/workflows/revision.yml` corre las pruebas (`pruebas/correr.py`), revisa la documentación cambiada y pasa el filtro de riesgo (`fabrica/riesgo.py`):
+
+- **Riesgo bajo, se junta solo en `main`:** documentación (`*.md`, salvo `CLAUDE.md` y los de `skills/` y `repertorio/`), casos de prueba nuevos en `pruebas/casos/`, el ejemplo de `diagnosticos/ejemplo/` y `diagnosticos/tarifario.json` cuando el PR cita una decisión de Manu con fecha.
+- **Riesgo alto, etiqueta `espera-manu`:** `revisar.py`, `sitios/`, `skills/`, `repertorio/`, los scripts de `diagnosticos/`, `.github/`, `fabrica/`, `CLAUDE.md`, cualquier archivo fuera de la lista de riesgo bajo y los cambios de más de 300 líneas. Manu los junta desde GitHub (Merge pull request).
+
+El filtro es código: da siempre lo mismo para el mismo cambio. Sus casos están en `pruebas/correr.py`.
+
 ## diagnosticos/: fábrica de diagnósticos
 
 Las herramientas con las que se arma el diagnóstico con presupuesto de un prospecto: transcribir los audios del chat, pasar fotos a data URL, la grilla de portadas, la página de ejemplo para el mockup (`molde_landing.py`), el mockup, el armado del JSON, la página con el molde del panel, la verificación en el celular y en A4, el registro de cada corrida y el tarifario que usa `revisar.py`. Detalle en `diagnosticos/LEEME.md`. Las sigue la skill `fabrica-diagnosticos` de la cuenta de Manu.
