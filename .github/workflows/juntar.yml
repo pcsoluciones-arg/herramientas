@@ -1,0 +1,43 @@
+# Fábrica de herramientas: Manu aprueba un PR de riesgo alto (con espera-manu) y este flujo lo junta en main.
+# Lo lanza el botón Aprobar del panel (secreto GITHUB_FABRICA) o Actions → Juntar → Run workflow con el número del PR.
+# herramientas no publica nada: juntar en main es el último paso.
+name: Juntar
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Número del pedido de cambio (PR) a juntar en main"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+
+concurrency:
+  group: juntar
+  cancel-in-progress: false
+
+jobs:
+  juntar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Revisar y juntar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ inputs.pr }}
+        run: |
+          set -e
+          case "$PR" in (''|*[!0-9]*) echo "El número de PR tiene que ser un número: '$PR'."; exit 1;; esac
+          estado=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json state,baseRefName,headRefOid --jq '.state+" "+.baseRefName+" "+.headRefOid')
+          set -- $estado
+          if [ "$1" != "OPEN" ] || [ "$2" != "main" ]; then echo "El PR #$PR no está abierto contra main ($1 $2)."; exit 1; fi
+          sha="$3"
+          controles=$(gh api "repos/$GITHUB_REPOSITORY/commits/$sha/check-runs?check_name=controles" --jq '[.check_runs[]|select(.conclusion!="skipped")][0].conclusion // "sin-correr"')
+          if [ "$controles" != "success" ]; then echo "Los controles del PR #$PR no están en verde ($controles): no se junta."; exit 1; fi
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --merge --delete-branch --match-head-commit "$sha"
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label espera-manu >/dev/null 2>&1 || true
+          echo "PR #$PR juntado en main con la aprobación de Manu."

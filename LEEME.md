@@ -60,7 +60,7 @@ python3 sitios/instalar.py --verificar ../sitio-plomerodebarrio
 Todo cambio entra por un pedido de cambio (PR) contra `main`. En cada PR, `.github/workflows/revision.yml` corre las pruebas (`pruebas/correr.py`), revisa la documentación cambiada y pasa el filtro de riesgo (`fabrica/riesgo.py`):
 
 - **Riesgo bajo, se junta solo en `main`:** documentación (`*.md`, salvo `CLAUDE.md` y los de `skills/` y `repertorio/`), casos de prueba nuevos en `pruebas/casos/`, el ejemplo de `diagnosticos/ejemplo/` y `diagnosticos/tarifario.json` cuando el PR cita una decisión de Manu con fecha.
-- **Riesgo alto, etiqueta `espera-manu`:** `revisar.py`, `sitios/`, `skills/`, `repertorio/`, los scripts de `diagnosticos/`, `.github/`, `fabrica/`, `CLAUDE.md`, cualquier archivo fuera de la lista de riesgo bajo y los cambios de más de 300 líneas. Manu los junta desde GitHub (Merge pull request).
+- **Riesgo alto, etiqueta `espera-manu`:** `revisar.py`, `sitios/`, `skills/`, `repertorio/`, los scripts de `diagnosticos/`, `.github/`, `fabrica/`, `CLAUDE.md`, cualquier archivo fuera de la lista de riesgo bajo y los cambios de más de 300 líneas. Manu los aprueba desde el panel (**Para aprobar** → **Aprobar**), que lanza `juntar.yml` con el número del PR; ese flujo revisa que los controles estén en verde y lo junta en `main`. Sin panel: GitHub → Actions → **Juntar** → Run workflow con el número del PR, o Merge pull request en el PR.
 
 El filtro es código: da siempre lo mismo para el mismo cambio. Sus casos están en `pruebas/correr.py`.
 
